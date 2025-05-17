@@ -1,12 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class FeatureFlagService {
   constructor(private prisma: PrismaService) {}
 
-  getAllFlags() {
-    return this.prisma.featureFlag.findMany();
+  async getFlags(query: {
+    environment?: string;
+    page?: number;
+    limit?: number;
+    sort?: string;
+    order?: 'asc' | 'desc';
+  }) {
+    const {
+      environment,
+      page = 1,
+      limit = 10,
+      sort = 'createdAt',
+      order = 'desc',
+    } = query;
+
+    return this.prisma.featureFlag.findMany({
+      where: environment ? { environment } : {},
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { [sort]: order },
+    });
   }
 
   createFlag(data: {
@@ -49,5 +69,12 @@ export class FeatureFlagService {
       console.error('Error deleting flag:', error);
       throw error;
     }
+  }
+
+  isFeatureEnabledForUser(userId: string, rolloutPercentage: number): boolean {
+    const hash = createHash('sha256').update(userId).digest('hex');
+    const hashNumber = parseInt(hash.substring(0, 8), 16);
+    const bucket = hashNumber % 100;
+    return bucket < rolloutPercentage;
   }
 }
