@@ -52,6 +52,31 @@ export class FeatureFlagController {
     return this.featureFlagService.evaluateFlag(flagName, userId, environment);
   }
 
+  @Get('evaluate-advanced')
+  async evaluateAdvancedFlag(
+    @Query('flagName') flagName: string,
+    @Query('userId') userId: string,
+    @Query('region') region?: string,
+    @Query('planType') planType?: string,
+    @Query('userGroup') userGroup?: string,
+    @Query('environment') environment = 'production',
+  ) {
+    if (!flagName || !userId) {
+      throw new BadRequestException('flagName and userId are required.');
+    }
+    return this.featureFlagService.evaluateAdvancedFlag(
+      flagName,
+      userId,
+      environment,
+      { region, planType, userGroup },
+    );
+  }
+
+  @Get('audit-logs')
+  async getAuditLogs(@Query('flagId') flagId?: string) {
+    return this.featureFlagService.getAuditLogs(flagId);
+  }
+
   @Post()
   async createFlag(@Body() body: CreateFeatureFlagDto) {
     return this.featureFlagService.createFlag(body);

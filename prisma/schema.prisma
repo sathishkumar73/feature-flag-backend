@@ -14,7 +14,17 @@ model FeatureFlag {
   enabled           Boolean  @default(false)
   environment       String
   rolloutPercentage Int      @default(0) // 0 to 100
+  version           Int      @default(1)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
 
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // e.g., CREATE, UPDATE, DELETE
+  flagId      String   // Associated Feature Flag ID
+  flagName    String
+  performedBy String
+  details     String?  // JSON or text with additional info about the change
+  createdAt   DateTime @default(now())
+}

@@ -12,6 +12,21 @@ function isFeatureEnabledForUser(
   return bucket < rolloutPercentage;
 }
 
+function evaluateAdvancedRules(params: {
+  region?: string;
+  planType?: string;
+  userGroup?: string;
+}) {
+  // Placeholder Logic
+  if (params.region === 'IN' && params.planType === 'premium') {
+    return true; // Force enable for Indian Premium Users
+  }
+  if (params.userGroup === 'beta-testers') {
+    return true; // Always enable for beta testers
+  }
+  return false; // Default to regular rollout logic
+}
+
 @Injectable()
 export class FeatureFlagService {
   constructor(private prisma: PrismaService) {}
@@ -39,13 +54,13 @@ export class FeatureFlagService {
     });
   }
 
-  createFlag(data: {
+  async createFlag(data: {
     name: string;
     description?: string;
     enabled?: boolean;
     environment: string;
   }) {
-    return this.prisma.featureFlag.create({
+    const newFlag = await this.prisma.featureFlag.create({
       data: {
         name: data.name,
         description: data.description,
@@ -53,9 +68,12 @@ export class FeatureFlagService {
         environment: data.environment,
       },
     });
+    await this.logAuditAction('CREATE', newFlag.id, newFlag.name, 'admin', {
+      ...newFlag,
+    });
   }
 
-  updateFlag(
+  async updateFlag(
     id: string,
     data: {
       name?: string;
@@ -64,17 +82,37 @@ export class FeatureFlagService {
       environment?: string;
     },
   ) {
-    return this.prisma.featureFlag.update({
+    const updatedFlag = await this.prisma.featureFlag.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        version: { increment: 1 },
+      }
+    });
+    await this.logAuditAction('UPDATE', updatedFlag.id, updatedFlag.name, 'admin', {
+      ...updatedFlag,
     });
   }
 
   async deleteFlag(id: string) {
     try {
-      return await this.prisma.featureFlag.delete({
+      const flag = await this.prisma.featureFlag.findUnique({
         where: { id },
       });
+
+      if (!flag) {
+        throw new Error(`Feature flag with ID ${id} not found.`);
+      }
+
+      const deletedFlag = await this.prisma.featureFlag.delete({
+        where: { id },
+      });
+
+      await this.logAuditAction('DELETE', flag.id, flag.name, 'admin', {
+        ...flag,
+      });
+
+      return deletedFlag;
     } catch (error) {
       console.error('Error deleting flag:', error);
       throw error;
@@ -104,5 +142,65 @@ export class FeatureFlagService {
       rollout: flag.rolloutPercentage,
       evaluatedAt: new Date().toISOString(),
     };
+  }
+
+  async evaluateAdvancedFlag(
+    flagName: string,
+    userId: string,
+    environment: string,
+    userAttributes: { region?: string; planType?: string; userGroup?: string },
+  ) {
+    const flag = await this.prisma.featureFlag.findFirst({
+      where: {
+        name: flagName,
+        environment,
+      },
+    });
+
+    if (!flag) {
+      throw new Error(
+        `Feature flag "${flagName}" not found for environment "${environment}".`,
+      );
+    }
+
+    // Check Advanced Rules First
+    const forceEnable = evaluateAdvancedRules(userAttributes);
+
+    const isEnabled =
+      forceEnable ||
+      (flag.enabled && isFeatureEnabledForUser(userId, flag.rolloutPercentage));
+
+    return {
+      flagName: flag.name,
+      isEnabled,
+      rollout: flag.rolloutPercentage,
+      evaluatedAt: new Date().toISOString(),
+      appliedAdvancedRules: forceEnable,
+    };
+  }
+
+  async getAuditLogs(flagId?: string) {
+    return this.prisma.auditLog.findMany({
+      where: flagId ? { flagId } : {},
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async logAuditAction(
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    flagId: string,
+    flagName: string,
+    performedBy: string,
+    details?: object,
+  ) {
+    await this.prisma.auditLog.create({
+      data: {
+        action,
+        flagId,
+        flagName,
+        performedBy,
+        details: details ? JSON.stringify(details) : undefined,
+      },
+    });
   }
 }
