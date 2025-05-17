@@ -7,11 +7,18 @@ import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,POST,PUT,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization, x-api-key',
+  });
 
   // ✅ Enable Validation Globally
   app.useGlobalPipes(new ValidationPipe());
 
-  app.useGlobalGuards(new ApiKeyGuard(app.get(ConfigService)));
+  app.useGlobalGuards(new ApiKeyGuard(configService));
 
   // ✅ Swagger Configuration
   const config = new DocumentBuilder()
@@ -27,6 +34,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document); // Accessible at /api-docs
 
-  await app.listen(3000);
+  const port = configService.get<number>('PORT') || 4000;
+  await app.listen(port);
 }
 bootstrap();
