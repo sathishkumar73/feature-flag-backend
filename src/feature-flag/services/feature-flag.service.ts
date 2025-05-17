@@ -2,6 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { createHash } from 'crypto';
 
+function isFeatureEnabledForUser(
+  userId: string,
+  rolloutPercentage: number,
+): boolean {
+  const hash = createHash('sha256').update(userId).digest('hex');
+  const hashNumber = parseInt(hash.substring(0, 8), 16);
+  const bucket = hashNumber % 100;
+  return bucket < rolloutPercentage;
+}
+
 @Injectable()
 export class FeatureFlagService {
   constructor(private prisma: PrismaService) {}
@@ -71,10 +81,28 @@ export class FeatureFlagService {
     }
   }
 
-  isFeatureEnabledForUser(userId: string, rolloutPercentage: number): boolean {
-    const hash = createHash('sha256').update(userId).digest('hex');
-    const hashNumber = parseInt(hash.substring(0, 8), 16);
-    const bucket = hashNumber % 100;
-    return bucket < rolloutPercentage;
+  async evaluateFlag(flagName: string, userId: string, environment: string) {
+    const flag = await this.prisma.featureFlag.findFirst({
+      where: {
+        name: flagName,
+        environment,
+      },
+    });
+
+    if (!flag) {
+      throw new Error(
+        `Feature flag "${flagName}" not found for environment "${environment}".`,
+      );
+    }
+
+    const isEnabled =
+      flag.enabled && isFeatureEnabledForUser(userId, flag.rolloutPercentage);
+
+    return {
+      flagName: flag.name,
+      isEnabled,
+      rollout: flag.rolloutPercentage,
+      evaluatedAt: new Date().toISOString(),
+    };
   }
 }

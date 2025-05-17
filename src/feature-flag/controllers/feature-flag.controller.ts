@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -37,6 +38,18 @@ export class FeatureFlagController {
       sort,
       order,
     });
+  }
+
+  @Get('evaluate')
+  async evaluateFlag(
+    @Query('flagName') flagName: string,
+    @Query('userId') userId: string,
+    @Query('environment') environment = 'production',
+  ) {
+    if (!flagName || !userId) {
+      throw new BadRequestException('flagName and userId are required.');
+    }
+    return this.featureFlagService.evaluateFlag(flagName, userId, environment);
   }
 
   @Post()

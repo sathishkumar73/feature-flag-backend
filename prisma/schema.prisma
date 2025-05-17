@@ -8,11 +8,13 @@ datasource db {
 }
 
 model FeatureFlag {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  enabled     Boolean  @default(false)
-  environment String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(uuid())
+  name              String
+  description       String?
+  enabled           Boolean  @default(false)
+  environment       String
+  rolloutPercentage Int      @default(0) // 0 to 100
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
+
