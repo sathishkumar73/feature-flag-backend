@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { FeatureFlagService } from './feature-flag.service';
 import { CreateFeatureFlagDto } from './create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from './update-feature-flag.dto';
@@ -23,5 +23,10 @@ export class FeatureFlagController {
     @Body() body: UpdateFeatureFlagDto,
   ) {
     return this.featureFlagService.updateFlag(id, body);
+  }
+
+  @Delete(':id')
+  async deleteFlag(@Param('id') id: string) {
+    return this.featureFlagService.deleteFlag(id);
   }
 }

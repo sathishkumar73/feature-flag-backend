@@ -39,4 +39,15 @@ export class FeatureFlagService {
       data,
     });
   }
+
+  async deleteFlag(id: string) {
+    try {
+      return await this.prisma.featureFlag.delete({
+        where: { id },
+      });
+    } catch (error) {
+      console.error('Error deleting flag:', error);
+      throw error;
+    }
+  }
 }
