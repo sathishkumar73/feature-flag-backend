@@ -2,9 +2,10 @@ import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { FeatureFlagService } from './feature-flag.service';
 import { CreateFeatureFlagDto } from './create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from './update-feature-flag.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Flags')
+@ApiSecurity('X-API-KEY')
 @Controller('flags')
 export class FeatureFlagController {
   constructor(private featureFlagService: FeatureFlagService) {}
