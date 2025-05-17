@@ -9,7 +9,12 @@ export class FeatureFlagService {
     return this.prisma.featureFlag.findMany();
   }
 
-  createFlag(data: { name: string; description?: string; enabled?: boolean; environment: string }) {
+  createFlag(data: {
+    name: string;
+    description?: string;
+    enabled?: boolean;
+    environment: string;
+  }) {
     return this.prisma.featureFlag.create({
       data: {
         name: data.name,
@@ -17,6 +22,21 @@ export class FeatureFlagService {
         enabled: data.enabled ?? false,
         environment: data.environment,
       },
+    });
+  }
+
+  updateFlag(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      enabled?: boolean;
+      environment?: string;
+    },
+  ) {
+    return this.prisma.featureFlag.update({
+      where: { id },
+      data,
     });
   }
 }
