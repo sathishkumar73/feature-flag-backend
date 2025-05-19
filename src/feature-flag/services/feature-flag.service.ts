@@ -46,12 +46,32 @@ export class FeatureFlagService {
       order = 'desc',
     } = query;
 
-    return this.prisma.featureFlag.findMany({
-      where: environment ? { environment } : {},
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { [sort]: order },
-    });
+    const [flags, totalCount] = await Promise.all([
+      this.prisma.featureFlag.findMany({
+        where: environment ? { environment } : {},
+        skip: (Number(page) - 1) * Number(limit),
+        take: Number(limit),
+        orderBy: { [sort]: order },
+      }),
+      this.prisma.featureFlag.count({
+        where: environment ? { environment } : {},
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / Number(limit));
+    const currentPage = Number(page);
+
+    return {
+      data: flags,
+      meta: {
+        totalCount,
+        totalPages,
+        currentPage,
+        limit: Number(limit),
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
+    };
   }
 
   async createFlag(data: {
@@ -71,6 +91,7 @@ export class FeatureFlagService {
     await this.logAuditAction('CREATE', newFlag.id, newFlag.name, 'admin', {
       ...newFlag,
     });
+    return newFlag;
   }
 
   async updateFlag(
@@ -87,11 +108,18 @@ export class FeatureFlagService {
       data: {
         ...data,
         version: { increment: 1 },
-      }
+      },
     });
-    await this.logAuditAction('UPDATE', updatedFlag.id, updatedFlag.name, 'admin', {
-      ...updatedFlag,
-    });
+    await this.logAuditAction(
+      'UPDATE',
+      updatedFlag.id,
+      updatedFlag.name,
+      'admin',
+      {
+        ...updatedFlag,
+      },
+    );
+    return updatedFlag;
   }
 
   async deleteFlag(id: string) {
