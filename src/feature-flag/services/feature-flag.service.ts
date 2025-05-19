@@ -1,35 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { createHash } from 'crypto';
-
-function isFeatureEnabledForUser(
-  userId: string,
-  rolloutPercentage: number,
-): boolean {
-  const hash = createHash('sha256').update(userId).digest('hex');
-  const hashNumber = parseInt(hash.substring(0, 8), 16);
-  const bucket = hashNumber % 100;
-  return bucket < rolloutPercentage;
-}
-
-function evaluateAdvancedRules(params: {
-  region?: string;
-  planType?: string;
-  userGroup?: string;
-}) {
-  // Placeholder Logic
-  if (params.region === 'IN' && params.planType === 'premium') {
-    return true; // Force enable for Indian Premium Users
-  }
-  if (params.userGroup === 'beta-testers') {
-    return true; // Always enable for beta testers
-  }
-  return false; // Default to regular rollout logic
-}
+import { hashUserToBucket } from '../../utils/hash';
 
 @Injectable()
 export class FeatureFlagService {
   constructor(private prisma: PrismaService) {}
+
+  private async isFlagEnabledForUser(flagId: string, userId: string): Promise<boolean> {
+    const flag = await this.prisma.featureFlag.findUnique({
+      where: { id: flagId },
+    });
+
+    if (!flag) {
+      throw new Error("Feature flag not found");
+    }
+
+    if (!flag.enabled) {
+      return false; // Globally disabled
+    }
+
+    if (flag.rolloutPercentage >= 100) {
+      return true; // Fully enabled
+    }
+
+    if (flag.rolloutPercentage <= 0) {
+      return false; // Fully disabled
+    }
+
+    const bucket = hashUserToBucket(userId);
+    return bucket < flag.rolloutPercentage;
+  }
+
+  private evaluateAdvancedRules(params: {
+    region?: string;
+    planType?: string;
+    userGroup?: string;
+  }) {
+    // Placeholder Logic
+    if (params.region === 'IN' && params.planType === 'premium') {
+      return true; // Force enable for Indian Premium Users
+    }
+    if (params.userGroup === 'beta-testers') {
+      return true; // Always enable for beta testers
+    }
+    return false; // Default to regular rollout logic
+  }
 
   async getFlags(query: {
     environment?: string;
@@ -161,8 +176,7 @@ export class FeatureFlagService {
       );
     }
 
-    const isEnabled =
-      flag.enabled && isFeatureEnabledForUser(userId, flag.rolloutPercentage);
+    const isEnabled = await this.isFlagEnabledForUser(flag.id, userId);
 
     return {
       flagName: flag.name,
@@ -192,11 +206,10 @@ export class FeatureFlagService {
     }
 
     // Check Advanced Rules First
-    const forceEnable = evaluateAdvancedRules(userAttributes);
+    const forceEnable = this.evaluateAdvancedRules(userAttributes);
 
     const isEnabled =
-      forceEnable ||
-      (flag.enabled && isFeatureEnabledForUser(userId, flag.rolloutPercentage));
+      forceEnable || await this.isFlagEnabledForUser(flag.id, userId);
 
     return {
       flagName: flag.name,
