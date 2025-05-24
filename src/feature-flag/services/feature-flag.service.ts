@@ -6,13 +6,16 @@ import { hashUserToBucket } from '../../utils/hash';
 export class FeatureFlagService {
   constructor(private prisma: PrismaService) {}
 
-  private async isFlagEnabledForUser(flagId: string, userId: string): Promise<boolean> {
+  private async isFlagEnabledForUser(
+    flagId: string,
+    userId: string,
+  ): Promise<boolean> {
     const flag = await this.prisma.featureFlag.findUnique({
       where: { id: flagId },
     });
 
     if (!flag) {
-      throw new Error("Feature flag not found");
+      throw new Error('Feature flag not found');
     }
 
     if (!flag.enabled) {
@@ -29,6 +32,22 @@ export class FeatureFlagService {
 
     const bucket = hashUserToBucket(userId);
     return bucket < flag.rolloutPercentage;
+  }
+
+  async getFlagsForClient(environment: string) {
+    return this.prisma.featureFlag.findMany({
+      where: {
+        environment,
+        enabled: true, // or include disabled if SDK wants full context
+      },
+      select: {
+        id: true,
+        name: true,
+        enabled: true,
+        rolloutPercentage: true,
+        // any other relevant fields
+      },
+    });
   }
 
   private evaluateAdvancedRules(params: {
@@ -209,7 +228,7 @@ export class FeatureFlagService {
     const forceEnable = this.evaluateAdvancedRules(userAttributes);
 
     const isEnabled =
-      forceEnable || await this.isFlagEnabledForUser(flag.id, userId);
+      forceEnable || (await this.isFlagEnabledForUser(flag.id, userId));
 
     return {
       flagName: flag.name,
