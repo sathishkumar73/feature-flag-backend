@@ -20,6 +20,11 @@ import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
 export class FeatureFlagController {
   constructor(private featureFlagService: FeatureFlagService) {}
 
+  @Get('client-flags')
+  async getFlagsForClient(@Query('environment') environment: string) {
+    return this.featureFlagService.getFlagsForClient(environment);
+  }
+
   @Get()
   async getFlags(
     @Query('environment') environment?: string,
