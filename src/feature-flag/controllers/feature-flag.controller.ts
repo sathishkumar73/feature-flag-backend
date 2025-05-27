@@ -25,6 +25,11 @@ export class FeatureFlagController {
     return this.featureFlagService.getFlagsForClient(environment);
   }
 
+  @Get('playground-flags')
+  async getPlaygroundFlagsForSession(@Query('sessionId') sessionId: string) {
+    return this.featureFlagService.getPlaygroundFlagsForSession(sessionId);
+  }
+
   @Get()
   async getFlags(
     @Query('environment') environment?: string,

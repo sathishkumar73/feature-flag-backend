@@ -34,6 +34,19 @@ export class FeatureFlagService {
     return bucket < flag.rolloutPercentage;
   }
 
+  async getPlaygroundFlagsForSession(sessionId: string) {
+    return this.prisma.playgroundFeatureFlag.findMany({
+      where: {
+        session_id: sessionId,
+      },
+      select: {
+        flag_key: true,
+        enabled: true,
+        rollout_percentage: true,
+      },
+    });
+  }  
+
   async getFlagsForClient(environment: string) {
     return this.prisma.featureFlag.findMany({
       where: {
