@@ -28,3 +28,14 @@ model AuditLog {
   details     String?  // JSON or text with additional info about the change
   createdAt   DateTime @default(now())
 }
+
+model PlaygroundFeatureFlag {
+  id                String   @id @default(uuid())
+  session_id        String
+  flag_key          String
+  enabled           Boolean  @default(false)
+  rollout_percentage Int     @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@unique([session_id, flag_key])
+}
