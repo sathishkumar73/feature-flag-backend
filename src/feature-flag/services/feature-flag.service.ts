@@ -38,7 +38,6 @@ export class FeatureFlagService {
     return this.prisma.playgroundFeatureFlag.findMany({
       where: {
         session_id: sessionId,
-        flag_key: 'dark-mode',
       },
       select: {
         flag_key: true,
