@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
+import { UpsertFeatureFlagDto } from '../dtos/upsert-feature-flag.dto';
 
 @Injectable()
 export class FeatureFlagService {
@@ -273,6 +274,28 @@ export class FeatureFlagService {
         flagName,
         performedBy,
         details: details ? JSON.stringify(details) : undefined,
+      },
+    });
+  }
+  
+  async upsertPlaygroundFlag(sessionId: string, upsertDto: UpsertFeatureFlagDto) {
+    const { enabled, rollout_percentage, flagKey } = upsertDto;
+    return this.prisma.playgroundFeatureFlag.upsert({
+      where: {
+        session_id_flag_key: {
+          session_id: sessionId,
+          flag_key: flagKey,
+        },
+      },
+      update: {
+        enabled: enabled,
+        rollout_percentage: rollout_percentage,
+      },
+      create: {
+        session_id: sessionId,
+        flag_key: flagKey,
+        enabled: enabled,
+        rollout_percentage: rollout_percentage,
       },
     });
   }

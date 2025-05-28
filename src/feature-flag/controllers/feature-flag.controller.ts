@@ -8,11 +8,15 @@ import {
   Post,
   Put,
   Query,
+  Patch,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { FeatureFlagService } from '../services/feature-flag.service';
 import { CreateFeatureFlagDto } from '../dtos/create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
+import { UpsertFeatureFlagDto } from '../dtos/upsert-feature-flag.dto';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')
@@ -88,6 +92,7 @@ export class FeatureFlagController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async createFlag(@Body() body: CreateFeatureFlagDto) {
     return this.featureFlagService.createFlag(body);
   }
@@ -101,7 +106,20 @@ export class FeatureFlagController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteFlag(@Param('id') id: string) {
     return this.featureFlagService.deleteFlag(id);
+  }
+
+  @Patch(':id/upsert')
+  @HttpCode(HttpStatus.OK)
+  async upsertFlag(
+    @Param('id') id: string,
+    @Body() body: UpsertFeatureFlagDto,
+  ) {
+    if (!id) {
+      throw new BadRequestException('sessionId is required for upsert operation.');
+    }
+    return this.featureFlagService.upsertPlaygroundFlag(id, body);
   }
 }
