@@ -11,7 +11,7 @@ async function bootstrap() {
 
   app.enableCors({
     origin: ['https://app.gradualrollout.com', 'http://localhost:3000', 'https://test.gradualrollout.com'],
-    methods: 'GET,POST,PUT,DELETE,OPTIONS',
+    methods: 'GET,POST,PUT,DELETE,OPTIONS,PATCH',
     allowedHeaders: 'Content-Type, Authorization, x-api-key',
   });
 
