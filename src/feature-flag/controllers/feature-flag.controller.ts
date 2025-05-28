@@ -11,8 +11,9 @@ import {
   Patch,
   HttpStatus,
   HttpCode,
+  NotFoundException,
 } from '@nestjs/common';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiNotFoundResponse, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { FeatureFlagService } from '../services/feature-flag.service';
 import { CreateFeatureFlagDto } from '../dtos/create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
@@ -32,6 +33,22 @@ export class FeatureFlagController {
   @Get('playground-flags')
   async getPlaygroundFlagsForSession(@Query('sessionId') sessionId: string) {
     return this.featureFlagService.getPlaygroundFlagsForSession(sessionId);
+  }
+
+  @Get(':sessionId/playground/:flagKey')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get a specific playground feature flag by session ID and flag key' })
+  @ApiResponse({ status: 200, description: 'The playground feature flag data.' })
+  @ApiNotFoundResponse({ description: 'Playground flag not found.' })
+  async getSinglePlaygroundFlag(
+    @Param('sessionId') sessionId: string,
+    @Param('flagKey') flagKey: string,
+  ) {
+    const flag = await this.featureFlagService.getSinglePlaygroundFlag(sessionId, flagKey);
+    if (!flag) {
+      throw new NotFoundException(`Playground flag '${flagKey}' for session '${sessionId}' not found.`);
+    }
+    return flag;
   }
 
   @Get()
