@@ -29,7 +29,7 @@ model AuditLog {
   createdAt   DateTime @default(now())
 }
 
-model PlaygroundFeatureFlag { // Keep the PascalCase model name for your code
+model PlaygroundFeatureFlag {
   id                 String   @id @default(uuid())
   session_id         String
   flag_key           String

@@ -277,6 +277,22 @@ export class FeatureFlagService {
       },
     });
   }
+
+  async getSinglePlaygroundFlag(sessionId: string, flagKey: string) {
+    return this.prisma.playgroundFeatureFlag.findUnique({
+      where: {
+        session_id_flag_key: {
+          session_id: sessionId,
+          flag_key: flagKey,
+        },
+      },
+      select: {
+        flag_key: true,
+        enabled: true,
+        rollout_percentage: true,
+      },
+    });
+  }
   
   async upsertPlaygroundFlag(sessionId: string, upsertDto: UpsertFeatureFlagDto) {
     const { enabled, rollout_percentage, flagKey } = upsertDto;
