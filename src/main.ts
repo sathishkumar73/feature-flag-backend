@@ -18,8 +18,6 @@ async function bootstrap() {
   // ✅ Enable Validation Globally
   app.useGlobalPipes(new ValidationPipe());
 
-  app.useGlobalGuards(new ApiKeyGuard(configService));
-
   // ✅ Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('Feature Flag API')
