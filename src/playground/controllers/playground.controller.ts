@@ -12,6 +12,7 @@ import {
   NotFoundException,
   UsePipes,
   ValidationPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -89,5 +90,18 @@ export class PlaygroundController {
       );
     }
     return flag;
+  }
+
+  @Get('flags')
+  @UseGuards(PlaygroundJwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all playground flags for a session' })
+  @ApiBearerAuth()
+  async getFlagsForSession(@Query('sessionId') sessionId: string) {
+    if (!sessionId) {
+      throw new BadRequestException('sessionId query parameter is required');
+    }
+    const flags = await this.playgroundService.getFlagsForSession(sessionId);
+    return flags;
   }
 }
