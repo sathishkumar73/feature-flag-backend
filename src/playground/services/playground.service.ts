@@ -59,4 +59,15 @@ export class PlaygroundService {
 
     return flag;
   }
+
+  async getFlagsForSession(sessionId: string) {
+    return this.prisma.playgroundFeatureFlag.findMany({
+      where: { session_id: sessionId },
+      select: {
+        flag_key: true,
+        enabled: true,
+        rollout_percentage: true,
+      },
+    });
+  }
 }
