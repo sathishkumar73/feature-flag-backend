@@ -41,3 +41,17 @@ model PlaygroundFeatureFlag {
   @@unique([session_id, flag_key])
   @@map("Playground")
 }
+
+model ApiKey {
+  id          Int       @id @default(autoincrement())
+  hashedKey   String    @unique
+  orgName     String?
+  owner       String?
+  scopes      String?   // e.g., JSON string or comma separated values
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+}
