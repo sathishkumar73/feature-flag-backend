@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
-import { UpsertFeatureFlagDto } from '../dtos/upsert-feature-flag.dto';
 
 @Injectable()
 export class FeatureFlagService {
@@ -33,19 +32,6 @@ export class FeatureFlagService {
 
     const bucket = hashUserToBucket(userId);
     return bucket < flag.rolloutPercentage;
-  }
-
-  async getPlaygroundFlagsForSession(sessionId: string) {
-    return this.prisma.playgroundFeatureFlag.findMany({
-      where: {
-        session_id: sessionId,
-      },
-      select: {
-        flag_key: true,
-        enabled: true,
-        rollout_percentage: true,
-      },
-    });
   }  
 
   async getFlagsForClient(environment: string) {
@@ -274,44 +260,6 @@ export class FeatureFlagService {
         flagName,
         performedBy,
         details: details ? JSON.stringify(details) : undefined,
-      },
-    });
-  }
-
-  async getSinglePlaygroundFlag(sessionId: string, flagKey: string) {
-    return this.prisma.playgroundFeatureFlag.findUnique({
-      where: {
-        session_id_flag_key: {
-          session_id: sessionId,
-          flag_key: flagKey,
-        },
-      },
-      select: {
-        flag_key: true,
-        enabled: true,
-        rollout_percentage: true,
-      },
-    });
-  }
-  
-  async upsertPlaygroundFlag(sessionId: string, upsertDto: UpsertFeatureFlagDto) {
-    const { enabled, rollout_percentage, flagKey } = upsertDto;
-    return this.prisma.playgroundFeatureFlag.upsert({
-      where: {
-        session_id_flag_key: {
-          session_id: sessionId,
-          flag_key: flagKey,
-        },
-      },
-      update: {
-        enabled: enabled,
-        rollout_percentage: rollout_percentage,
-      },
-      create: {
-        session_id: sessionId,
-        flag_key: flagKey,
-        enabled: enabled,
-        rollout_percentage: rollout_percentage,
       },
     });
   }

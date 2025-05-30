@@ -8,16 +8,19 @@ import {
   Post,
   Put,
   Query,
-  Patch,
   HttpStatus,
   HttpCode,
-  NotFoundException,
 } from '@nestjs/common';
-import { ApiNotFoundResponse, ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { FeatureFlagService } from '../services/feature-flag.service';
 import { CreateFeatureFlagDto } from '../dtos/create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
-import { UpsertFeatureFlagDto } from '../dtos/upsert-feature-flag.dto';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')
@@ -28,27 +31,6 @@ export class FeatureFlagController {
   @Get('client-flags')
   async getFlagsForClient(@Query('environment') environment: string) {
     return this.featureFlagService.getFlagsForClient(environment);
-  }
-
-  @Get('playground-flags')
-  async getPlaygroundFlagsForSession(@Query('sessionId') sessionId: string) {
-    return this.featureFlagService.getPlaygroundFlagsForSession(sessionId);
-  }
-
-  @Get(':sessionId/playground/:flagKey')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get a specific playground feature flag by session ID and flag key' })
-  @ApiResponse({ status: 200, description: 'The playground feature flag data.' })
-  @ApiNotFoundResponse({ description: 'Playground flag not found.' })
-  async getSinglePlaygroundFlag(
-    @Param('sessionId') sessionId: string,
-    @Param('flagKey') flagKey: string,
-  ) {
-    const flag = await this.featureFlagService.getSinglePlaygroundFlag(sessionId, flagKey);
-    if (!flag) {
-      throw new NotFoundException(`Playground flag '${flagKey}' for session '${sessionId}' not found.`);
-    }
-    return flag;
   }
 
   @Get()
@@ -126,17 +108,5 @@ export class FeatureFlagController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteFlag(@Param('id') id: string) {
     return this.featureFlagService.deleteFlag(id);
-  }
-
-  @Patch(':id/upsert')
-  @HttpCode(HttpStatus.OK)
-  async upsertFlag(
-    @Param('id') id: string,
-    @Body() body: UpsertFeatureFlagDto,
-  ) {
-    if (!id) {
-      throw new BadRequestException('sessionId is required for upsert operation.');
-    }
-    return this.featureFlagService.upsertPlaygroundFlag(id, body);
   }
 }
