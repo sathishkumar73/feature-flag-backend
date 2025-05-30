@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuditLogModule } from './audit-logs/audit-logs.module';
 import { PlaygroundModule } from './playground/playground.module';
+import { ApiKeyModule } from './api-key/api-key.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PlaygroundModule } from './playground/playground.module';
     PrismaModule,
     AuditLogModule,
     PlaygroundModule,
+    ApiKeyModule,
   ],
   controllers: [],
   providers: [PrismaService],
