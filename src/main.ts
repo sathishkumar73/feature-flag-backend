@@ -10,7 +10,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   app.enableCors({
-    origin: ['https://app.gradualrollout.com', 'http://localhost:3000', 'https://test.gradualrollout.com', 'https://canary.gradualrollout.com'],
+    origin: ['https://gradualrollout.com', 'https://app.gradualrollout.com', 'http://localhost:3000', 'https://test.gradualrollout.com', 'https://canary.gradualrollout.com'],
     methods: 'GET,POST,PUT,DELETE,OPTIONS,PATCH',
     allowedHeaders: 'Content-Type, Authorization, x-api-key',
   });
