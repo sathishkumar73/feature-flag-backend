@@ -17,15 +17,16 @@ export class PlaygroundJwtAuthGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify(token);
+
       if (
         payload.scope !== 'playground' ||
         !payload.sessionId ||
-        !payload.permissions?.includes('write') // Or customize permission check
+        !payload.permissions?.includes('write') // adjust permission as needed
       ) {
-        throw new UnauthorizedException('Invalid token scope, sessionId or permissions');
+        throw new UnauthorizedException('Invalid token scope, sessionId, or permissions');
       }
 
-      // Attach decoded payload to request if needed later
+      // Attach payload to request.user for downstream usage if needed
       request.user = payload;
       return true;
     } catch (err) {
