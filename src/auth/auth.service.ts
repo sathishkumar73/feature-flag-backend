@@ -9,7 +9,7 @@ export class AuthService {
       email,
       password,
       options: {
-        emailRedirectTo: 'https://app.gradualrollout.com/auth/verify-email',
+        emailRedirectTo: 'http://localhost:3000/auth/verify-email',
       },
     });
 
