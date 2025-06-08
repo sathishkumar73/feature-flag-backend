@@ -2,7 +2,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ApiKeyGuard } from './common/guards/api-key.guard';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {

@@ -8,7 +8,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ApiKeyService {
   constructor(private prisma: PrismaService) {}
 
-  async generateAndStoreApiKey(orgName?: string, owner?: string): Promise<{ apiKeyPlain: string }> {
+  async generateAndStoreApiKey(
+    orgName?: string,
+    owner?: string,
+  ): Promise<{ apiKeyPlain: string }> {
     // Generate secure random API key (hex string, 64 chars = 256 bits)
     const apiKeyPlain = randomBytes(32).toString('hex');
 
@@ -34,7 +37,7 @@ export class ApiKeyService {
       data: { isActive: false, updatedAt: new Date() },
     });
   }
-  
+
   // Fetch the current active API key metadata (without returning the hashed key)
   async getActiveApiKey(orgName?: string, owner?: string) {
     return this.prisma.apiKey.findFirst({
@@ -52,5 +55,27 @@ export class ApiKeyService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Find an active API key record by the key string
+   * @param apiKey The full API key string to search for
+   * @returns The API key record if found and active, or null if not
+   */
+  async findActiveKey(rawKey: string) {
+    // Fetch all active API keys
+    const activeKeys = await this.prisma.apiKey.findMany({
+      where: { isActive: true },
+    });
+
+    // Compare rawKey against all active hashed keys
+    for (const keyRecord of activeKeys) {
+      const match = await bcrypt.compare(rawKey, keyRecord.hashedKey);
+      if (match) {
+        return keyRecord;
+      }
+    }
+
+    return null;
   }
 }
