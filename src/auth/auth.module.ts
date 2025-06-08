@@ -9,10 +9,11 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   imports: [
     JwtModule.register({
       secret: process.env.SUPABASE_JWT_SECRET,
-      signOptions: { algorithm: 'HS256' },
+      signOptions: { algorithm: 'HS256', expiresIn: '1h' },
     }),
   ],
   providers: [AuthService, JwtStrategy],
+  exports: [JwtStrategy, AuthService],
   controllers: [AuthController],
 })
 export class AuthModule {}
