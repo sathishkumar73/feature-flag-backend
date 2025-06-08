@@ -13,8 +13,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // This payload is decoded JWT content (claims)
-    // Return it or map to your user object
     return payload;
   }
 }
