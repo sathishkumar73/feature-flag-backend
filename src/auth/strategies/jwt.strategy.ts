@@ -1,0 +1,20 @@
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor() {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      algorithms: ['HS256'],  // Important: match Supabase's algorithm
+    });
+  }
+
+  async validate(payload: any) {
+    // This payload is decoded JWT content (claims)
+    // Return it or map to your user object
+    return payload;
+  }
+}
