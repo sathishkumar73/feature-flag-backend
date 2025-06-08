@@ -24,13 +24,12 @@ import {
 import { FeatureFlagService } from '../services/feature-flag.service';
 import { CreateFeatureFlagDto } from '../dtos/create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
 
 @ApiTags('Flags')
-@ApiSecurity('X-API-KEY') // for api key auth
-@ApiBearerAuth('jwt') // for JWT bearer token auth
+@ApiSecurity('X-API-KEY')
 @Controller('flags')
-@UseGuards(AuthGuard('jwt')) // Apply JWT AuthGuard (consider composite guard later)
+@UseGuards(JwtOrApiKeyGuard)
 export class FeatureFlagController {
   constructor(private featureFlagService: FeatureFlagService) {}
 

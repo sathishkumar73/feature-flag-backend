@@ -1,12 +1,12 @@
 import { Controller, Get, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { AuditLogService } from '../services/audit-logs.service';
 import { ApiSecurity, ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')
 @Controller('audit-logs')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiKeyGuard)
 export class AuditLogsController {
   constructor(private readonly auditLogService: AuditLogService) {}
 

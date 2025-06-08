@@ -2,11 +2,12 @@ import { Controller, Post, Body, Put, Get, UseGuards, BadRequestException } from
 import { ApiKeyService } from '../services/api-key.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiSecurity, ApiOperation, ApiResponse, ApiBadRequestResponse } from '@nestjs/swagger';
+import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
 
 @ApiTags('API Keys')
 @ApiSecurity('X-API-KEY')
 @Controller('api-keys')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiKeyGuard)
 export class ApiKeyController {
   constructor(private apiKeyService: ApiKeyService) {}
 
