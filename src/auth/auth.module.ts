@@ -8,7 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 @Module({
   imports: [
     JwtModule.register({
-      secret: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      secret: process.env.SUPABASE_JWT_SECRET,
       signOptions: { algorithm: 'HS256', expiresIn: '1h' },
     }),
   ],
