@@ -84,37 +84,7 @@ export class AuthService {
       create: {
         id:    user.id,
         email: user.email!,
-<<<<<<< Updated upstream
-        role:  'USER',
-      },
-      update: {
-        // you could sync additional metadata here if needed
-      },
-    });
-
-    return { message: 'Login successful', session: data };
-  }
-
-  async login(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    // 2) Upsert into Prisma (in case you later create users via admin UI)
-    await this.prisma.user.upsert({
-      where: { id: user.id },
-      create: {
-        id:    user.id,
-        email: user.email!,
-        name:  user.email!.split('@')[0], // Use email username as default name
-=======
         name:  defaultName,
->>>>>>> Stashed changes
         role:  'USER',
       },
       update: {
