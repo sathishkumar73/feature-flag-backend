@@ -1,5 +1,3 @@
-// src/auth/auth.service.ts
-
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { supabase } from '../utils/supabaseClient';
 import { PrismaService } from '../prisma/prisma.service';
@@ -33,21 +31,27 @@ export class AuthService {
       );
     }
 
-    // 2) Mirror into your Prisma User table
+    const defaultName = user.email!.split('@')[0];
+
+    // 2) Mirror into Prisma User table
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
         id:    user.id,      // reuse Supabase UUID
         email: user.email!,
-        name:  user.email!.split('@')[0], // Use email username as default name
+        name:  defaultName,
         role:  'USER',       // default role
       },
       update: {
         email: user.email!,  // sync email if it ever changes
+        name:  defaultName,  // keep name in sync
       },
     });
 
-    return { message: 'User created. Verification email sent.', user: data.user };
+    return {
+      message: 'User created. Verification email sent.',
+      user: data.user,
+    };
   }
 
   /**
@@ -72,12 +76,15 @@ export class AuthService {
       );
     }
 
+    const defaultName = user.email!.split('@')[0];
+
     // 2) Upsert into Prisma (in case you later create users via admin UI)
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
         id:    user.id,
         email: user.email!,
+<<<<<<< Updated upstream
         role:  'USER',
       },
       update: {
@@ -105,13 +112,20 @@ export class AuthService {
         id:    user.id,
         email: user.email!,
         name:  user.email!.split('@')[0], // Use email username as default name
+=======
+        name:  defaultName,
+>>>>>>> Stashed changes
         role:  'USER',
       },
       update: {
-        // you could sync additional metadata here if needed
+        email: user.email!,         // sync email
+        name:  defaultName,         // sync name
       },
     });
 
-    return { message: 'Login successful', session: data };
+    return {
+      message: 'Login successful',
+      session: data,
+    };
   }
 }
