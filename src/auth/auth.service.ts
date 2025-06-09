@@ -39,6 +39,7 @@ export class AuthService {
       create: {
         id:    user.id,      // reuse Supabase UUID
         email: user.email!,
+        name:  user.email!.split('@')[0], // Use email username as default name
         role:  'USER',       // default role
       },
       update: {
@@ -77,6 +78,7 @@ export class AuthService {
       create: {
         id:    user.id,
         email: user.email!,
+        name:  user.email!.split('@')[0], // Use email username as default name
         role:  'USER',
       },
       update: {
