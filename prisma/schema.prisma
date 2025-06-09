@@ -5,6 +5,31 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+}
+
+// Roles for access control
+enum UserRole {
+  USER
+  ADMIN
+  DEV
+  PRODUCT_MANAGER
+}
+
+// New User model to track creators/updaters with roles
+model User {
+  id                 String         @id @default(uuid())
+  name               String
+  email              String         @unique
+  role               UserRole       @default(USER)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreatedBy")
+  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdatedBy")
+  auditLogsPerformed  AuditLog[]     @relation("AuditLogPerformedBy")
+  apiKeysCreated      ApiKey[]       @relation("ApiKeyCreatedBy")
+  apiKeysUpdated      ApiKey[]       @relation("ApiKeyUpdatedBy")
 }
 
 model FeatureFlag {
@@ -13,20 +38,30 @@ model FeatureFlag {
   description       String?
   enabled           Boolean  @default(false)
   environment       String
-  rolloutPercentage Int      @default(0) // 0 to 100
+  rolloutPercentage Int      @default(0)
   version           Int      @default(1)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  // Track which user created/updated this flag
+  createdById       String?
+  updatedById       String?
+  createdBy         User?    @relation("FeatureFlagCreatedBy", fields: [createdById], references: [id])
+  updatedBy         User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id])
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  action      String   // e.g., CREATE, UPDATE, DELETE
-  flagId      String   // Associated Feature Flag ID
-  flagName    String
-  performedBy String
-  details     String?  // JSON or text with additional info about the change
-  createdAt   DateTime @default(now())
+  id             String   @id @default(uuid())
+  action         String   // e.g., CREATE, UPDATE, DELETE
+  flagId         String   // Associated Feature Flag ID
+  flagName       String
+
+  // Track who performed the action
+  performedById  String?
+  performedBy    User?    @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
+
+  details        String?  // JSON or text with additional info about the change
+  createdAt      DateTime @default(now())
 }
 
 model PlaygroundFeatureFlag {
@@ -43,15 +78,21 @@ model PlaygroundFeatureFlag {
 }
 
 model ApiKey {
-  id          Int       @id @default(autoincrement())
-  hashedKey   String    @unique
-  orgName     String?
-  owner       String?
-  scopes      String?   // e.g., JSON string or comma separated values
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  isActive    Boolean   @default(true)
+  id            Int       @id @default(autoincrement())
+  hashedKey     String    @unique
+  orgName       String?
+  owner         String?
+  scopes        String?   // e.g., JSON string or comma separated values
+  lastUsedAt    DateTime?
+  expiresAt     DateTime?
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isActive      Boolean   @default(true)
+
+  // Track creator/updater
+  createdById   String?
+  updatedById   String?
+  createdBy     User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
 }
