@@ -5,8 +5,10 @@ import {
   Post,
   HttpException,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { RequestWithUser } from './types/request-with-user.type';
 
 @Controller('auth')
 export class AuthController {
@@ -47,6 +49,23 @@ export class AuthController {
       return { message: 'Login successful', data };
     } catch (err) {
       throw new HttpException(err.message, HttpStatus.UNAUTHORIZED);
+    }
+  }
+
+  @Post('upsert')
+  async upsertUser(@Req() req: RequestWithUser) {
+    const { sub: id, email } = req.user;
+    if (!id || !email) {
+      throw new HttpException(
+        'Invalid user payload',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      return await this.authService.upsertUser(id, email);
+    } catch (err) {
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
