@@ -39,14 +39,14 @@ export class AuthService {
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
-        id:    user.id,      // reuse Supabase UUID
+        id: user.id, // reuse Supabase UUID
         email: user.email,
-        name:  defaultName,
-        role:  'USER',       // default role
+        name: defaultName,
+        role: 'USER', // default role
       },
       update: {
-        email: user.email,   // sync email if it ever changes
-        name:  defaultName,  // keep name in sync
+        email: user.email, // sync email if it ever changes
+        name: defaultName, // keep name in sync
       },
     });
 
@@ -84,14 +84,14 @@ export class AuthService {
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
-        id:    user.id,
+        id: user.id,
         email: user.email,
-        name:  defaultName,
-        role:  'USER',
+        name: defaultName,
+        role: 'USER',
       },
       update: {
-        email: user.email,   // sync email
-        name:  defaultName,  // sync name
+        email: user.email, // sync email
+        name: defaultName, // sync name
       },
     });
 
@@ -99,5 +99,15 @@ export class AuthService {
       message: 'Login successful',
       session: data,
     };
+  }
+
+  async upsertUser(id: string, email: string) {
+    const defaultName = email.split('@')[0];
+    await this.prisma.user.upsert({
+      where: { id },
+      create: { id, email, name: defaultName, role: 'USER' },
+      update: { email, name: defaultName },
+    });
+    return { message: 'User synced' };
   }
 }
