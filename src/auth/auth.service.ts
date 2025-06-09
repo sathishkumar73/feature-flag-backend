@@ -1,3 +1,5 @@
+// src/auth/auth.service.ts
+
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { supabase } from '../utils/supabaseClient';
 import { PrismaService } from '../prisma/prisma.service';
@@ -24,26 +26,26 @@ export class AuthService {
     }
 
     const user = data.user;
-    if (!user || !user.id) {
+    if (!user?.id || !user.email) {
       throw new HttpException(
         'Unexpected signup response from auth provider',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
-    const defaultName = user.email!.split('@')[0];
+    const defaultName = user.email.split('@')[0];
 
     // 2) Mirror into Prisma User table
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
         id:    user.id,      // reuse Supabase UUID
-        email: user.email!,
+        email: user.email,
         name:  defaultName,
         role:  'USER',       // default role
       },
       update: {
-        email: user.email!,  // sync email if it ever changes
+        email: user.email,   // sync email if it ever changes
         name:  defaultName,  // keep name in sync
       },
     });
@@ -69,27 +71,27 @@ export class AuthService {
     }
 
     const user = data.user;
-    if (!user || !user.id) {
+    if (!user?.id || !user.email) {
       throw new HttpException(
         'Unexpected login response from auth provider',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
-    const defaultName = user.email!.split('@')[0];
+    const defaultName = user.email.split('@')[0];
 
-    // 2) Upsert into Prisma (in case you later create users via admin UI)
+    // 2) Upsert into Prisma User table
     await this.prisma.user.upsert({
       where: { id: user.id },
       create: {
         id:    user.id,
-        email: user.email!,
+        email: user.email,
         name:  defaultName,
         role:  'USER',
       },
       update: {
-        email: user.email!,         // sync email
-        name:  defaultName,         // sync name
+        email: user.email,   // sync email
+        name:  defaultName,  // sync name
       },
     });
 
