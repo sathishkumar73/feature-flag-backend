@@ -258,9 +258,7 @@ export class FeatureFlagService {
         action,
         flagId,
         flagName,
-        performedBy: {
-          connect: { id: performedById }
-        },
+        performedById,
         details: details ? JSON.stringify(details) : null,
       },
     });
