@@ -250,16 +250,18 @@ export class FeatureFlagService {
     action: 'CREATE' | 'UPDATE' | 'DELETE',
     flagId: string,
     flagName: string,
-    performedBy: string,
+    performedById: string,
     details?: object,
   ) {
-    await this.prisma.auditLog.create({
+    return this.prisma.auditLog.create({
       data: {
         action,
         flagId,
         flagName,
-        performedBy,
-        details: details ? JSON.stringify(details) : undefined,
+        performedBy: {
+          connect: { id: performedById }
+        },
+        details: details ? JSON.stringify(details) : null,
       },
     });
   }

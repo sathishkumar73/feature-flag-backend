@@ -42,8 +42,7 @@ export class JwtOrApiKeyGuard extends AuthGuard('jwt') {
   // Dummy async API key validator (replace with actual logic)
   private async validateApiKey(apiKey: string): Promise<boolean> {
     // Query your service to check if API key exists and is active
-    const keyRecord = await this.apiKeyService.findActiveKey(apiKey);
-  
+    const keyRecord = await this.apiKeyService.getActiveApiKey();
     return !!keyRecord;
   }
   
