@@ -6,9 +6,11 @@ import {
   HttpException,
   HttpStatus,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RequestWithUser } from './types/request-with-user.type';
+import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -52,8 +54,16 @@ export class AuthController {
     }
   }
 
+  @UseGuards(JwtOrApiKeyGuard)
   @Post('upsert')
   async upsertUser(@Req() req: RequestWithUser) {
+    if (!req.user) {
+      throw new HttpException(
+        'Authentication required',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     const { sub: id, email } = req.user;
     if (!id || !email) {
       throw new HttpException(
