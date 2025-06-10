@@ -113,16 +113,20 @@ export class FeatureFlagService {
     description?: string;
     enabled?: boolean;
     environment: string;
-  }) {
+    rolloutPercentage?: number;
+  }, userId: string) {
     const newFlag = await this.prisma.featureFlag.create({
       data: {
         name: data.name,
         description: data.description,
         enabled: data.enabled ?? false,
         environment: data.environment,
+        createdById: userId,
+        updatedById: userId,
+        rolloutPercentage: data.rolloutPercentage ?? 0,
       },
     });
-    await this.logAuditAction('CREATE', newFlag.id, newFlag.name, 'admin', {
+    await this.logAuditAction('CREATE', newFlag.id, newFlag.name, userId, {
       ...newFlag,
     });
     return newFlag;
@@ -136,19 +140,21 @@ export class FeatureFlagService {
       enabled?: boolean;
       environment?: string;
     },
+    userId: string,
   ) {
     const updatedFlag = await this.prisma.featureFlag.update({
       where: { id },
       data: {
         ...data,
         version: { increment: 1 },
+        updatedById: userId,
       },
     });
     await this.logAuditAction(
       'UPDATE',
       updatedFlag.id,
       updatedFlag.name,
-      'admin',
+      userId,
       {
         ...updatedFlag,
       },
@@ -156,7 +162,7 @@ export class FeatureFlagService {
     return updatedFlag;
   }
 
-  async deleteFlag(id: string) {
+  async deleteFlag(id: string, userId: string) {
     try {
       const flag = await this.prisma.featureFlag.findUnique({
         where: { id },
@@ -170,7 +176,7 @@ export class FeatureFlagService {
         where: { id },
       });
 
-      await this.logAuditAction('DELETE', flag.id, flag.name, 'admin', {
+      await this.logAuditAction('DELETE', flag.id, flag.name, userId, {
         ...flag,
       });
 
@@ -253,6 +259,9 @@ export class FeatureFlagService {
     performedById: string,
     details?: object,
   ) {
+    if (!performedById) {
+      throw new Error('User ID is required for audit logging');
+    }
     return this.prisma.auditLog.create({
       data: {
         action,

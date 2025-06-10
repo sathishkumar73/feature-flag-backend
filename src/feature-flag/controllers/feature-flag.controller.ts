@@ -11,6 +11,7 @@ import {
   HttpStatus,
   HttpCode,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
@@ -25,6 +26,7 @@ import { FeatureFlagService } from '../services/feature-flag.service';
 import { CreateFeatureFlagDto } from '../dtos/create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
 import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
+import { RequestWithUser } from 'src/auth/types/request-with-user.type';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')
@@ -147,8 +149,14 @@ export class FeatureFlagController {
   @ApiResponse({ status: 201, description: 'Feature flag created' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createFlag(@Body() body: CreateFeatureFlagDto) {
-    return this.featureFlagService.createFlag(body);
+  async createFlag(
+    @Body() body: CreateFeatureFlagDto,
+    @Req() req: RequestWithUser,
+  ) {
+    if (!req.user?.sub) {
+      throw new BadRequestException('User ID is required');
+    }
+    return this.featureFlagService.createFlag(body, req.user.sub);
   }
 
   @ApiOperation({ summary: 'Update an existing feature flag by ID' })
@@ -157,15 +165,25 @@ export class FeatureFlagController {
   async updateFlag(
     @Param('id') id: string,
     @Body() body: UpdateFeatureFlagDto,
+    @Req() req: RequestWithUser,
   ) {
-    return this.featureFlagService.updateFlag(id, body);
+    if (!req.user?.sub) {
+      throw new BadRequestException('User ID is required');
+    }
+    return this.featureFlagService.updateFlag(id, body, req.user.sub);
   }
 
   @ApiOperation({ summary: 'Delete a feature flag by ID' })
   @ApiResponse({ status: 204, description: 'Feature flag deleted' })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteFlag(@Param('id') id: string) {
-    return this.featureFlagService.deleteFlag(id);
+  async deleteFlag(
+    @Param('id') id: string,
+    @Req() req: RequestWithUser,
+  ) {
+    if (!req.user?.sub) {
+      throw new BadRequestException('User ID is required');
+    }
+    return this.featureFlagService.deleteFlag(id, req.user.sub);
   }
 }
