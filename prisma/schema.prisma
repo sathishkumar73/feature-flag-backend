@@ -80,7 +80,6 @@ model PlaygroundFeatureFlag {
 model ApiKey {
   id            Int       @id @default(autoincrement())
   hashedKey     String    @unique
-  orgName       String?
   owner         String?
   scopes        String?   // e.g., JSON string or comma separated values
   lastUsedAt    DateTime?

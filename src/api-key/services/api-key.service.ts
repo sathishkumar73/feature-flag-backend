@@ -9,8 +9,7 @@ export class ApiKeyService {
   constructor(private prisma: PrismaService) {}
 
   async generateAndStoreApiKey(
-    orgName?: string,
-    owner?: string,
+    userId: string,
   ): Promise<{ apiKeyPlain: string }> {
     const apiKeyPlain = randomBytes(32).toString('hex');
     const hashedKey = await bcrypt.hash(apiKeyPlain, 10);
@@ -18,8 +17,8 @@ export class ApiKeyService {
     await this.prisma.apiKey.create({
       data: {
         hashedKey,
-        orgName,
-        owner,
+        owner: userId,
+        createdById: userId,
       },
     });
 
@@ -33,16 +32,14 @@ export class ApiKeyService {
     });
   }
 
-  async getActiveApiKey(orgName?: string, owner?: string) {
+  async getActiveApiKey(userId: string) {
     return this.prisma.apiKey.findFirst({
       where: {
         isActive: true,
-        orgName,
-        owner,
+        owner: userId,
       },
       select: {
         id: true,
-        orgName: true,
         owner: true,
         createdAt: true,
         updatedAt: true,
@@ -52,10 +49,9 @@ export class ApiKeyService {
   }
 
   async getOrCreateApiKey(
-    orgName?: string,
-    owner?: string,
+    userId: string,
   ): Promise<{ apiKeyPlain: string | null; apiKeyMeta: any }> {
-    const existingKey = await this.getActiveApiKey(orgName, owner);
+    const existingKey = await this.getActiveApiKey(userId);
 
     if (existingKey) {
       // Return metadata only, no plain key for security
@@ -63,10 +59,29 @@ export class ApiKeyService {
     }
 
     // No active key found, create new
-    const { apiKeyPlain } = await this.generateAndStoreApiKey(orgName, owner);
+    const { apiKeyPlain } = await this.generateAndStoreApiKey(userId);
 
-    const newKeyMeta = await this.getActiveApiKey(orgName, owner);
+    const newKeyMeta = await this.getActiveApiKey(userId);
 
     return { apiKeyPlain, apiKeyMeta: newKeyMeta };
+  }
+
+  async validateApiKey(apiKey: string): Promise<boolean> {
+    try {
+      const activeKeys = await this.prisma.apiKey.findMany({
+        where: { isActive: true },
+        select: { hashedKey: true },
+      });
+
+      for (const key of activeKeys) {
+        const isValid = await bcrypt.compare(apiKey, key.hashedKey);
+        if (isValid) {
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
   }
 }

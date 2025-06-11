@@ -153,9 +153,6 @@ export class FeatureFlagController {
     @Body() body: CreateFeatureFlagDto,
     @Req() req: RequestWithUser,
   ) {
-    if (!req.user?.sub) {
-      throw new BadRequestException('User ID is required');
-    }
     return this.featureFlagService.createFlag(body, req.user.sub);
   }
 
@@ -167,9 +164,6 @@ export class FeatureFlagController {
     @Body() body: UpdateFeatureFlagDto,
     @Req() req: RequestWithUser,
   ) {
-    if (!req.user?.sub) {
-      throw new BadRequestException('User ID is required');
-    }
     return this.featureFlagService.updateFlag(id, body, req.user.sub);
   }
 
@@ -181,9 +175,6 @@ export class FeatureFlagController {
     @Param('id') id: string,
     @Req() req: RequestWithUser,
   ) {
-    if (!req.user?.sub) {
-      throw new BadRequestException('User ID is required');
-    }
     return this.featureFlagService.deleteFlag(id, req.user.sub);
   }
 }
