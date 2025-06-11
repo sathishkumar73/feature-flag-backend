@@ -28,8 +28,7 @@ export class JwtOrApiKeyGuard extends AuthGuard('jwt') {
       throw new UnauthorizedException('No valid JWT token or API key provided');
     }
 
-    // TODO: Validate API key (e.g., check against DB or cache)
-    const isValidApiKey = await this.validateApiKey(apiKey);
+    const isValidApiKey = await this.apiKeyService.validateApiKey(apiKey);
     if (!isValidApiKey) {
       throw new UnauthorizedException('Invalid API key');
     }
@@ -38,12 +37,4 @@ export class JwtOrApiKeyGuard extends AuthGuard('jwt') {
     request.user = { apiKey, scope: 'sdk' };
     return true;
   }
-
-  // Dummy async API key validator (replace with actual logic)
-  private async validateApiKey(apiKey: string): Promise<boolean> {
-    // Query your service to check if API key exists and is active
-    const keyRecord = await this.apiKeyService.getActiveApiKey();
-    return !!keyRecord;
-  }
-  
 }

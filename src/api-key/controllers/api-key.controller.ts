@@ -7,6 +7,7 @@ import {
   Get,
   UseGuards,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { ApiKeyService } from '../services/api-key.service';
 import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
@@ -27,15 +28,16 @@ export class ApiKeyController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get or create active API key for the organization and owner',
+    summary: 'Get or create active API key for the authenticated user',
   })
   @ApiResponse({
     status: 200,
     description: 'API key metadata and optionally plain key on first fetch',
   })
-  async getApiKey(@Body() body: { orgName?: string; owner?: string }) {
+  async getApiKey(@Request() req) {
     const { apiKeyPlain, apiKeyMeta } =
-      await this.apiKeyService.getOrCreateApiKey(body.orgName, body.owner);
+      await this.apiKeyService.getOrCreateApiKey(req.user.sub);
+    console.log(apiKeyMeta, apiKeyPlain);
     return { apiKey: apiKeyMeta, plainKey: apiKeyPlain };
   }
 
@@ -47,19 +49,13 @@ export class ApiKeyController {
     status: 201,
     description: 'New API key generated and returned',
   })
-  async generateApiKey(@Body() body: { orgName?: string; owner?: string }) {
-    const activeKey = await this.apiKeyService.getActiveApiKey(
-      body.orgName,
-      body.owner,
-    );
+  async generateApiKey(@Request() req) {
+    const activeKey = await this.apiKeyService.getActiveApiKey(req.user.sub);
     if (activeKey) {
       await this.apiKeyService.revokeApiKey(activeKey.id);
     }
 
-    const { apiKeyPlain } = await this.apiKeyService.generateAndStoreApiKey(
-      body.orgName,
-      body.owner,
-    );
+    const { apiKeyPlain } = await this.apiKeyService.generateAndStoreApiKey(req.user.sub);
     return { apiKey: apiKeyPlain };
   }
 
