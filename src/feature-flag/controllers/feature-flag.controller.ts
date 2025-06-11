@@ -60,6 +60,7 @@ export class FeatureFlagController {
   @ApiResponse({ status: 200, description: 'Returns paginated flags' })
   @Get()
   async getFlags(
+    @Req() req: RequestWithUser,
     @Query('environment') environment?: string,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
@@ -75,6 +76,7 @@ export class FeatureFlagController {
       limit: isNaN(limitNum) ? 10 : limitNum,
       sort,
       order,
+      userId: req.user.sub,
     });
   }
 

@@ -71,6 +71,7 @@ export class FeatureFlagService {
     limit?: number;
     sort?: string;
     order?: 'asc' | 'desc';
+    userId: string;
   }) {
     const {
       environment,
@@ -78,17 +79,23 @@ export class FeatureFlagService {
       limit = 10,
       sort = 'createdAt',
       order = 'desc',
+      userId,
     } = query;
+
+    const whereClause = {
+      ...(environment ? { environment } : {}),
+      createdById: userId,
+    };
 
     const [flags, totalCount] = await Promise.all([
       this.prisma.featureFlag.findMany({
-        where: environment ? { environment } : {},
+        where: whereClause,
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
         orderBy: { [sort]: order },
       }),
       this.prisma.featureFlag.count({
-        where: environment ? { environment } : {},
+        where: whereClause,
       }),
     ]);
 
