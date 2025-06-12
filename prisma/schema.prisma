@@ -3,9 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
+  provider    = "postgresql"
+  url         = env("DATABASE_URL")
+  directUrl   = env("DIRECT_URL")
 }
 
 // Roles for access control
@@ -16,56 +16,53 @@ enum UserRole {
   PRODUCT_MANAGER
 }
 
-// New User model to track creators/updaters with roles
 model User {
-  id                 String         @id @default(uuid())
-  name               String
-  email              String         @unique
-  role               UserRole       @default(USER)
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  id                  String          @id @default(uuid()) @db.Uuid
+  name                String
+  email               String          @unique
+  role                UserRole        @default(USER)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
-  featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreatedBy")
-  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdatedBy")
-  auditLogsPerformed  AuditLog[]     @relation("AuditLogPerformedBy")
-  apiKeysCreated      ApiKey[]       @relation("ApiKeyCreatedBy")
-  apiKeysUpdated      ApiKey[]       @relation("ApiKeyUpdatedBy")
+  featureFlagsCreated FeatureFlag[]   @relation("FeatureFlagCreatedBy")
+  featureFlagsUpdated FeatureFlag[]   @relation("FeatureFlagUpdatedBy")
+  auditLogsPerformed  AuditLog[]      @relation("AuditLogPerformedBy")
+  apiKeysCreated      ApiKey[]        @relation("ApiKeyCreatedBy")
+  apiKeysUpdated      ApiKey[]        @relation("ApiKeyUpdatedBy")
 }
 
 model FeatureFlag {
-  id                String   @id @default(uuid())
-  name              String
-  description       String?
-  enabled           Boolean  @default(false)
-  environment       String
-  rolloutPercentage Int      @default(0)
-  version           Int      @default(1)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                 String    @id @default(uuid()) @db.Uuid
+  name               String
+  description        String?
+  enabled            Boolean   @default(false)
+  environment        String
+  rolloutPercentage  Int       @default(0)
+  version            Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  // Track which user created/updated this flag
-  createdById       String?
-  updatedById       String?
-  createdBy         User?    @relation("FeatureFlagCreatedBy", fields: [createdById], references: [id])
-  updatedBy         User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id])
+  createdById        String?   @db.Uuid
+  updatedById        String?   @db.Uuid
+  createdBy          User?     @relation("FeatureFlagCreatedBy", fields: [createdById], references: [id])
+  updatedBy          User?     @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id])
 }
 
 model AuditLog {
-  id             String   @id @default(uuid())
-  action         String   // e.g., CREATE, UPDATE, DELETE
-  flagId         String   // Associated Feature Flag ID
-  flagName       String
+  id                String    @id @default(uuid()) @db.Uuid
+  action            String
+  flagId            String
+  flagName          String
 
-  // Track who performed the action
-  performedById  String?
-  performedBy    User?    @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
+  performedById     String?   @db.Uuid
+  performedBy       User?     @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
 
-  details        String?  // JSON or text with additional info about the change
-  createdAt      DateTime @default(now())
+  details           String?
+  createdAt         DateTime  @default(now())
 }
 
 model PlaygroundFeatureFlag {
-  id                 String   @id @default(uuid())
+  id                 String   @id @default(uuid()) @db.Uuid
   session_id         String
   flag_key           String
   enabled            Boolean  @default(false)
@@ -81,7 +78,7 @@ model ApiKey {
   id            Int       @id @default(autoincrement())
   hashedKey     String    @unique
   owner         String?
-  scopes        String?   // e.g., JSON string or comma separated values
+  scopes        String?
   lastUsedAt    DateTime?
   expiresAt     DateTime?
   description   String?
@@ -89,9 +86,8 @@ model ApiKey {
   updatedAt     DateTime  @updatedAt
   isActive      Boolean   @default(true)
 
-  // Track creator/updater
-  createdById   String?
-  updatedById   String?
+  createdById   String?   @db.Uuid
+  updatedById   String?   @db.Uuid
   createdBy     User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
   updatedBy     User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
 }
