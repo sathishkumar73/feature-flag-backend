@@ -48,7 +48,6 @@ export class FeatureFlagService extends BasePrismaService {
 
   async getFlagsForClient(environment: string, apiKey: string) {
     // To find the correct API key, you need to hash the incoming apiKey and match it, or use the prefix for fast lookup
-    // To find the correct API key, you need to hash the incoming apiKey and match it, or use the prefix for fast lookup
     // Let's do prefix lookup, then bcrypt compare
     const prefix = apiKey.slice(0, 8);
     const keyRecord = await this.prisma.apiKey.findFirst({

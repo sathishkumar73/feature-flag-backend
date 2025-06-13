@@ -17,8 +17,10 @@ async function bootstrap() {
         return callback(null, true); // Allow non-browser requests
       }
       if (allowedOrigins.includes(origin)) {
+        console.log('CORS DEBUG: Origin allowed:', origin);
         callback(null, true);
       } else {
+        console.log('CORS DEBUG: Origin NOT allowed:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
