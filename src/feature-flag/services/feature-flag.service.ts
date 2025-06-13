@@ -2,19 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
 import { AuditLogService } from '../../audit-logs/services/audit-logs.service';
+import { BasePrismaService } from 'src/common/services/base-prisma.service';
+import { FeatureFlag } from '@prisma/client';
 
 @Injectable()
-export class FeatureFlagService {
+export class FeatureFlagService extends BasePrismaService {
   constructor(
-    private prisma: PrismaService,
+    prisma: PrismaService,
     private auditLogService: AuditLogService,
-  ) {}
+  ) {
+    super(prisma);
+  }
 
   private async isFlagEnabledForUser(
     flagId: string,
     userId: string,
   ): Promise<boolean> {
-    const flag = await this.prisma.featureFlag.findUnique({
+    const flag = await this.findUnique<FeatureFlag>('featureFlag', {
       where: { id: flagId },
     });
 
@@ -39,17 +43,16 @@ export class FeatureFlagService {
   }  
 
   async getFlagsForClient(environment: string) {
-    return this.prisma.featureFlag.findMany({
+    return this.findMany<FeatureFlag>('featureFlag', {
       where: {
         environment,
-        enabled: true, // or include disabled if SDK wants full context
+        enabled: true,
       },
       select: {
         id: true,
         name: true,
         enabled: true,
         rolloutPercentage: true,
-        // any other relevant fields
       },
     });
   }
@@ -92,13 +95,13 @@ export class FeatureFlagService {
     };
 
     const [flags, totalCount] = await Promise.all([
-      this.prisma.featureFlag.findMany({
+      this.findMany<FeatureFlag>('featureFlag', {
         where: whereClause,
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
         orderBy: { [sort]: order },
       }),
-      this.prisma.featureFlag.count({
+      this.count('featureFlag', {
         where: whereClause,
       }),
     ]);
@@ -126,7 +129,7 @@ export class FeatureFlagService {
     environment: string;
     rolloutPercentage?: number;
   }, userId: string) {
-    const newFlag = await this.prisma.featureFlag.create({
+    const newFlag = await this.create<FeatureFlag>('featureFlag', {
       data: {
         name: data.name,
         description: data.description,
@@ -153,7 +156,7 @@ export class FeatureFlagService {
     },
     userId: string,
   ) {
-    const updatedFlag = await this.prisma.featureFlag.update({
+    const updatedFlag = await this.update<FeatureFlag>('featureFlag', {
       where: { id },
       data: {
         ...data,
@@ -175,7 +178,7 @@ export class FeatureFlagService {
 
   async deleteFlag(id: string, userId: string) {
     try {
-      const flag = await this.prisma.featureFlag.findUnique({
+      const flag = await this.findUnique<FeatureFlag>('featureFlag', {
         where: { id },
       });
 
@@ -183,7 +186,7 @@ export class FeatureFlagService {
         throw new Error(`Feature flag with ID ${id} not found.`);
       }
 
-      const deletedFlag = await this.prisma.featureFlag.delete({
+      const deletedFlag = await this.delete<FeatureFlag>('featureFlag', {
         where: { id },
       });
 
@@ -199,7 +202,7 @@ export class FeatureFlagService {
   }
 
   async evaluateFlag(flagName: string, userId: string, environment: string) {
-    const flag = await this.prisma.featureFlag.findFirst({
+    const flag = await this.findFirst<FeatureFlag>('featureFlag', {
       where: {
         name: flagName,
         environment,
@@ -228,7 +231,7 @@ export class FeatureFlagService {
     environment: string,
     userAttributes: { region?: string; planType?: string; userGroup?: string },
   ) {
-    const flag = await this.prisma.featureFlag.findFirst({
+    const flag = await this.findFirst<FeatureFlag>('featureFlag', {
       where: {
         name: flagName,
         environment,

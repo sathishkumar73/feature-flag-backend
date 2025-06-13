@@ -1,17 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BasePrismaService } from '../../common/services/base-prisma.service';
+import { PlaygroundFeatureFlag } from '@prisma/client';
 
 @Injectable()
-export class PlaygroundService {
-  constructor(private readonly prisma: PrismaService) {}
+export class PlaygroundService extends BasePrismaService {
+  constructor(protected readonly prisma: PrismaService) {
+    super(prisma);
+  }
 
   // Upsert a playground flag scoped by sessionId and flagKey
   async upsertFlag(
     sessionId: string,
     data: { flagKey: string; enabled: boolean; rollout_percentage: number }
-  ) {
+  ): Promise<PlaygroundFeatureFlag> {
     const { flagKey, enabled, rollout_percentage } = data;
-
     return this.prisma.playgroundFeatureFlag.upsert({
       where: {
         session_id_flag_key: {
@@ -36,8 +39,8 @@ export class PlaygroundService {
   }
 
   // Fetch a specific playground flag by sessionId and flagKey
-  async getFlag(sessionId: string, flagKey: string) {
-    const flag = await this.prisma.playgroundFeatureFlag.findUnique({
+  async getFlag(sessionId: string, flagKey: string): Promise<Pick<PlaygroundFeatureFlag, 'flag_key' | 'enabled' | 'rollout_percentage'> | null> {
+    return this.findUnique<Pick<PlaygroundFeatureFlag, 'flag_key' | 'enabled' | 'rollout_percentage'>>('playgroundFeatureFlag', {
       where: {
         session_id_flag_key: {
           session_id: sessionId,
@@ -50,14 +53,6 @@ export class PlaygroundService {
         rollout_percentage: true,
       },
     });
-
-    if (!flag) {
-      throw new NotFoundException(
-        `Playground flag '${flagKey}' for session '${sessionId}' not found.`,
-      );
-    }
-
-    return flag;
   }
 
   async getFlagsForSession(sessionId: string) {
