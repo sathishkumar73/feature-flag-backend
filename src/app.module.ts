@@ -7,6 +7,7 @@ import { AuditLogModule } from './audit-logs/audit-logs.module';
 import { PlaygroundModule } from './playground/playground.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { AuthModule } from './auth/auth.module';
+import { CorsService } from './common/services/cors.service';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuthModule } from './auth/auth.module';
     AuthModule,
   ],
   controllers: [],
-  providers: [PrismaService],
+  providers: [PrismaService, CorsService],
+  exports: [CorsService],
 })
 export class AppModule {}

@@ -69,4 +69,19 @@ export class ApiKeyController {
     }
     return this.apiKeyService.revokeApiKey(body.id);
   }
+
+  @Post('validate')
+  @ApiOperation({ summary: 'Validate an API key' })
+  @ApiResponse({ status: 200, description: 'API key is valid' })
+  @ApiBadRequestResponse({ description: 'Invalid or missing API key' })
+  async validateApiKey(@Body() body: { apiKey: string }) {
+    if (!body.apiKey) {
+      throw new BadRequestException('API key is required');
+    }
+    const isValid = await this.apiKeyService.validateApiKey(body.apiKey);
+    if (!isValid) {
+      throw new BadRequestException('Invalid API key');
+    }
+    return { valid: true };
+  }
 }

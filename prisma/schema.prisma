@@ -3,91 +3,110 @@ generator client {
 }
 
 datasource db {
-  provider    = "postgresql"
-  url         = env("DATABASE_URL")
-  directUrl   = env("DIRECT_URL")
-}
-
-// Roles for access control
-enum UserRole {
-  USER
-  ADMIN
-  DEV
-  PRODUCT_MANAGER
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                  String          @id @default(uuid()) @db.Uuid
   name                String
-  email               String          @unique
-  role                UserRole        @default(USER)
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-
-  featureFlagsCreated FeatureFlag[]   @relation("FeatureFlagCreatedBy")
-  featureFlagsUpdated FeatureFlag[]   @relation("FeatureFlagUpdatedBy")
-  auditLogsPerformed  AuditLog[]      @relation("AuditLogPerformedBy")
-  apiKeysCreated      ApiKey[]        @relation("ApiKeyCreatedBy")
-  apiKeysUpdated      ApiKey[]        @relation("ApiKeyUpdatedBy")
+  email               String        @unique
+  role                UserRole      @default(USER)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  id                  String        @id @default(uuid()) @db.Uuid
+  apiKeysCreated      ApiKey[]      @relation("ApiKeyCreatedBy")
+  apiKeysUpdated      ApiKey[]      @relation("ApiKeyUpdatedBy")
+  auditLogsPerformed  AuditLog[]    @relation("AuditLogPerformedBy")
+  featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreatedBy")
+  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdatedBy")
+  allowedOriginsAdded AllowedOrigin[] @relation("UserAddedOrigins")
 }
 
 model FeatureFlag {
-  id                 String    @id @default(uuid()) @db.Uuid
-  name               String
-  description        String?
-  enabled            Boolean   @default(false)
-  environment        String
-  rolloutPercentage  Int       @default(0)
-  version            Int       @default(1)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  createdById        String?   @db.Uuid
-  updatedById        String?   @db.Uuid
-  createdBy          User?     @relation("FeatureFlagCreatedBy", fields: [createdById], references: [id])
-  updatedBy          User?     @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id])
+  name              String
+  description       String?
+  enabled           Boolean  @default(false)
+  environment       String
+  rolloutPercentage Int      @default(0)
+  version           Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  id                String   @id @default(uuid()) @db.Uuid
+  createdById       String?  @db.Uuid
+  updatedById       String?  @db.Uuid
+  createdBy         User?    @relation("FeatureFlagCreatedBy", fields: [createdById], references: [id])
+  updatedBy         User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id])
 }
 
 model AuditLog {
-  id                String    @id @default(uuid()) @db.Uuid
-  action            String
-  flagId            String
-  flagName          String
-
-  performedById     String?   @db.Uuid
-  performedBy       User?     @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
-
-  details           String?
-  createdAt         DateTime  @default(now())
+  action        String
+  flagId        String
+  flagName      String
+  details       String?
+  createdAt     DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  performedById String?  @db.Uuid
+  performedBy   User?    @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
 }
 
 model PlaygroundFeatureFlag {
-  id                 String   @id @default(uuid()) @db.Uuid
   session_id         String
   flag_key           String
   enabled            Boolean  @default(false)
   rollout_percentage Int      @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  id                 String   @id @default(uuid()) @db.Uuid
 
   @@unique([session_id, flag_key])
   @@map("Playground")
 }
 
 model ApiKey {
-  id            Int       @id @default(autoincrement())
-  hashedKey     String    @unique
-  owner         String?
-  scopes        String?
-  lastUsedAt    DateTime?
-  expiresAt     DateTime?
-  description   String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  isActive      Boolean   @default(true)
+  id          Int       @id @default(autoincrement())
+  prefix      String    // For fast lookup
+  hashedKey   String    @unique
+  owner       String?
+  scopes      String?
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+  createdById String?   @db.Uuid
+  updatedById String?   @db.Uuid
+  createdBy   User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
 
-  createdById   String?   @db.Uuid
-  updatedById   String?   @db.Uuid
-  createdBy     User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
-  updatedBy     User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
+  @@index([prefix]) // Index for fast lookup
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model wait_list_signup {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  email      String   @unique
+  company    String?
+  role       String?
+  challenges String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model AllowedOrigin {
+  id        Int      @id @default(autoincrement())
+  origin    String   @unique
+  projectId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  addedById String?  @db.Uuid
+  addedBy   User?    @relation("UserAddedOrigins", fields: [addedById], references: [id])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  DEV
+  PRODUCT_MANAGER
 }
