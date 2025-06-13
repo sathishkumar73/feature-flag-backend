@@ -48,7 +48,6 @@ export class ApiKeyController {
         'id' | 'owner' | 'createdAt' | 'updatedAt'
       > | null;
     } = await this.apiKeyService.getOrCreateApiKey(req.user.sub);
-    console.log(apiKeyMeta, apiKeyPlain);
     return { apiKey: apiKeyMeta, plainKey: apiKeyPlain };
   }
 

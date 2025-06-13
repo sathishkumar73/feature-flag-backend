@@ -42,8 +42,16 @@ export class FeatureFlagController {
     description: 'Returns flags for the given environment',
   })
   @Get('client-flags')
-  async getFlagsForClient(@Query('environment') environment: string) {
-    return this.featureFlagService.getFlagsForClient(environment);
+  async getFlagsForClient(
+    @Query('environment') environment: string,
+    @Req() req: RequestWithUser
+  ) {
+    const apiKeyHeader = req.headers['x-api-key'] || req.headers['X-API-KEY'];
+    const apiKey = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
+    if (!apiKey) {
+      throw new BadRequestException('API key is required in X-API-KEY header');
+    }
+    return this.featureFlagService.getFlagsForClient(environment, apiKey);
   }
 
   @ApiOperation({ summary: 'Get paginated list of flags' })
