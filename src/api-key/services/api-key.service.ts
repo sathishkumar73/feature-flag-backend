@@ -67,4 +67,18 @@ export class ApiKeyService {
 
     return { apiKeyPlain, apiKeyMeta: newKeyMeta };
   }
+
+  async validateApiKey(apiKey: string): Promise<boolean> {
+    try {
+      const prefix = apiKey.slice(0, 8); // Extract prefix from provided key
+      const keyRecord = await this.prisma.apiKey.findFirst({
+        where: { prefix, isActive: true },
+        select: { hashedKey: true },
+      });
+      if (!keyRecord) return false;
+      return await bcrypt.compare(apiKey, keyRecord.hashedKey);
+    } catch (error) {
+      return false;
+    }
+  }
 }
