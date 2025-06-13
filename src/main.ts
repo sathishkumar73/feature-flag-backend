@@ -33,7 +33,7 @@ async function bootstrap() {
     // If behind a proxy (e.g., Heroku, NGINX), check x-forwarded-proto
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     if (!isSecure) {
-      res.status(400).json({
+      res.status(426).header('Upgrade', 'HTTPS').json({
         error: 'For security reasons, HTTP requests are blocked. Please use HTTPS.',
       });
       return;

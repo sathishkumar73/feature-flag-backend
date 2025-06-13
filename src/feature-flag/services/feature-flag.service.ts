@@ -47,11 +47,6 @@ export class FeatureFlagService extends BasePrismaService {
   }
 
   async getFlagsForClient(environment: string, apiKey: string) {
-    // Find the API key record and get the owner (userId)
-    const apiKeyRecord = await this.prisma.apiKey.findFirst({
-      where: { hashedKey: undefined, isActive: true }, // placeholder, see below
-      select: { owner: true },
-    });
     // To find the correct API key, you need to hash the incoming apiKey and match it, or use the prefix for fast lookup
     // Let's do prefix lookup, then bcrypt compare
     const prefix = apiKey.slice(0, 8);
