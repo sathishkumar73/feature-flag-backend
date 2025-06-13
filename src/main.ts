@@ -12,16 +12,35 @@ async function bootstrap() {
 
   app.enableCors({
     origin: async (origin, callback) => {
-      if (!origin) return callback(null, true); // Allow non-browser requests
       const allowedOrigins = await corsService.getAllowedOrigins();
+      console.log('CORS DEBUG:', { origin, allowedOrigins });
+      if (!origin) {
+        console.log('CORS DEBUG: No origin header, allowing request');
+        return callback(null, true); // Allow non-browser requests
+      }
       if (allowedOrigins.includes(origin)) {
+        console.log('CORS DEBUG: Origin allowed:', origin);
         callback(null, true);
       } else {
+        console.log('CORS DEBUG: Origin NOT allowed:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: 'GET,POST,PUT,DELETE,OPTIONS,PATCH',
     allowedHeaders: 'Content-Type, Authorization, x-api-key',
+  });
+
+  // Enforce HTTPS: Block non-HTTPS requests
+  app.use((req, res, next) => {
+    // If behind a proxy (e.g., Heroku, NGINX), check x-forwarded-proto
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    if (!isSecure) {
+      res.status(400).json({
+        error: 'For security reasons, HTTP requests are blocked. Please use HTTPS.',
+      });
+      return;
+    }
+    next();
   });
 
   // ✅ Enable Validation Globally

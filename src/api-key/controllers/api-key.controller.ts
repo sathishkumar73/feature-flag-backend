@@ -19,7 +19,6 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { RevokeApiKeyDto } from '../dtos/revoke-api-key.dto';
-import { ValidateApiKeyDto } from '../dtos/validate-api-key.dto';
 import { RequestWithUser } from '../../auth/types/request-with-user.type';
 import { ApiKey } from '@prisma/client';
 
@@ -88,11 +87,12 @@ export class ApiKeyController {
   @ApiOperation({ summary: 'Validate an API key' })
   @ApiResponse({ status: 200, description: 'API key is valid' })
   @ApiBadRequestResponse({ description: 'Invalid or missing API key' })
-  async validateApiKey(@Body() body: ValidateApiKeyDto) {
-    if (!body.apiKey) {
-      throw new BadRequestException('API key is required');
+  async validateApiKey(@Request() req) {
+    const apiKey = req.headers['x-api-key'] || req.headers['X-API-KEY'];
+    if (!apiKey) {
+      throw new BadRequestException('API key is required in X-API-KEY header');
     }
-    const isValid = await this.apiKeyService.validateApiKey(body.apiKey);
+    const isValid = await this.apiKeyService.validateApiKey(apiKey);
     if (!isValid) {
       throw new BadRequestException('Invalid API key');
     }
