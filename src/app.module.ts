@@ -8,6 +8,7 @@ import { PlaygroundModule } from './playground/playground.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { AuthModule } from './auth/auth.module';
 import { CorsService } from './common/services/cors.service';
+import { JwtOrApiKeyGuard } from './common/guards/jwt-or-apikey.guard';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { CorsService } from './common/services/cors.service';
     AuthModule,
   ],
   controllers: [],
-  providers: [PrismaService, CorsService],
+  providers: [PrismaService, CorsService, JwtOrApiKeyGuard],
   exports: [CorsService],
 })
 export class AppModule {}
