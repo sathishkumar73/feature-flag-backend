@@ -58,9 +58,10 @@ export class ApiKeyService extends BasePrismaService {
     });
   }
 
-  async getOrCreateApiKey(
-    userId: string,
-  ): Promise<{ apiKeyPlain: string | null; apiKeyMeta: any }> {
+  async getOrCreateApiKey(userId: string): Promise<{
+    apiKeyPlain: string | null;
+    apiKeyMeta: Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'> | null;
+  }> {
     const existingKey = await this.getActiveApiKey(userId);
 
     if (existingKey) {

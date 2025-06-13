@@ -20,6 +20,8 @@ import {
 } from '@nestjs/swagger';
 import { RevokeApiKeyDto } from '../dtos/revoke-api-key.dto';
 import { ValidateApiKeyDto } from '../dtos/validate-api-key.dto';
+import { RequestWithUser } from '../../auth/types/request-with-user.type';
+import { ApiKey } from '@prisma/client';
 
 @ApiTags('API Keys')
 @ApiSecurity('X-API-KEY')
@@ -36,9 +38,17 @@ export class ApiKeyController {
     status: 200,
     description: 'API key metadata and optionally plain key on first fetch',
   })
-  async getApiKey(@Request() req) {
-    const { apiKeyPlain, apiKeyMeta } =
-      await this.apiKeyService.getOrCreateApiKey(req.user.sub);
+  async getApiKey(@Request() req: RequestWithUser) {
+    const {
+      apiKeyPlain,
+      apiKeyMeta,
+    }: {
+      apiKeyPlain: string | null;
+      apiKeyMeta: Pick<
+        ApiKey,
+        'id' | 'owner' | 'createdAt' | 'updatedAt'
+      > | null;
+    } = await this.apiKeyService.getOrCreateApiKey(req.user.sub);
     console.log(apiKeyMeta, apiKeyPlain);
     return { apiKey: apiKeyMeta, plainKey: apiKeyPlain };
   }
@@ -51,7 +61,7 @@ export class ApiKeyController {
     status: 201,
     description: 'New API key generated and returned',
   })
-  async generateApiKey(@Request() req) {
+  async generateApiKey(@Request() req: RequestWithUser) {
     const activeKey = await this.apiKeyService.getActiveApiKey(req.user.sub);
     if (activeKey) {
       await this.apiKeyService.revokeApiKey(activeKey.id);
