@@ -10,14 +10,32 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RequestWithUser } from './types/request-with-user.type';
-import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
+import { JwtOrApiKeyGuard } from '../common/guards/jwt-or-apikey.guard';
+import { AuthCredentialsDto } from './dtos/auth-credentials.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
+  ApiInternalServerErrorResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  async signup(@Body() body: { email: string; password: string }) {
+  @ApiOperation({ summary: 'Sign up a new user' })
+  @ApiResponse({
+    status: 201,
+    description: 'User created. Verification email sent.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Email and password are required or invalid.',
+  })
+  async signup(@Body() body: AuthCredentialsDto) {
     const { email, password } = body;
 
     if (!email || !password) {
@@ -36,7 +54,13 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
+  @ApiOperation({ summary: 'Login a user' })
+  @ApiResponse({ status: 200, description: 'Login successful.' })
+  @ApiBadRequestResponse({
+    description: 'Email and password are required or invalid.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials.' })
+  async login(@Body() body: AuthCredentialsDto) {
     const { email, password } = body;
 
     if (!email || !password) {
@@ -56,6 +80,11 @@ export class AuthController {
 
   @UseGuards(JwtOrApiKeyGuard)
   @Post('upsert')
+  @ApiOperation({ summary: 'Upsert (create or update) a user from JWT' })
+  @ApiResponse({ status: 200, description: 'User upserted successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication required.' })
+  @ApiBadRequestResponse({ description: 'Invalid user payload.' })
+  @ApiInternalServerErrorResponse({ description: 'Unexpected error.' })
   async upsertUser(@Req() req: RequestWithUser) {
     if (!req.user) {
       throw new HttpException(
@@ -66,10 +95,7 @@ export class AuthController {
 
     const { sub: id, email } = req.user;
     if (!id || !email) {
-      throw new HttpException(
-        'Invalid user payload',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Invalid user payload', HttpStatus.BAD_REQUEST);
     }
 
     try {

@@ -12,10 +12,12 @@ import { ThrottlerModule } from '@nestjs/throttler';
       signOptions: { expiresIn: '1h' },
     }),
     ThrottlerModule.forRoot({
-      throttlers: [{
-        ttl: 60,
-        limit: 10,
-      }]
+      throttlers: [
+        {
+          ttl: 60,
+          limit: 10,
+        },
+      ],
     }),
   ],
   controllers: [PlaygroundController],

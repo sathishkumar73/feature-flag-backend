@@ -21,6 +21,94 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+# Feature Flag SaaS Backend
+
+This is a scalable, production-ready feature flag backend built with NestJS and Prisma. It supports dynamic CORS, API key management, audit logging, and more.
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Set up your environment variables
+cp .env.example .env
+# Edit .env as needed
+
+# 3. Run database migrations
+npx prisma migrate deploy
+
+# 4. (Optional) Seed the database with initial data
+npx prisma db seed
+
+# 5. Start the server (dev mode)
+npm run start:dev
+```
+
+---
+
+## 🛠 Common Operations
+
+### Database Migrations
+- **Development:**
+  ```bash
+  npx prisma migrate dev
+  ```
+- **Production:**
+  ```bash
+  npx prisma migrate deploy
+  ```
+
+### Seeding the Database
+```bash
+npx prisma db seed
+```
+
+### Running Tests
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+### API Documentation (Swagger)
+- After starting the server, visit: [http://localhost:4000/api-docs](http://localhost:4000/api-docs)
+- All endpoints, DTOs, and error responses are documented.
+
+### CORS
+- Allowed origins are managed in the database (`AllowedOrigin` table).
+- To add an origin, insert a row in the `AllowedOrigin` table.
+
+---
+
+## 📝 Project Structure
+- `src/` — Main source code (modules, controllers, services, DTOs)
+- `prisma/` — Prisma schema, migrations, and seed scripts
+- `test/` — E2E tests
+
+---
+
+## 🧑‍💻 Developer Notes
+- Use DTOs and validation for all inputs.
+- All errors use NestJS HTTP exceptions for consistency.
+- Core business logic is covered by unit tests.
+- CORS is dynamic and database-driven for SaaS use cases.
+
+---
+
+## 📚 More
+- For advanced usage, see the code and comments in each module.
+- For help, open an issue or PR.
+
+---
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.

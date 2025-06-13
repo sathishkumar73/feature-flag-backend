@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BasePrismaService } from '../../common/services/base-prisma.service';
 
 @Injectable()
-export class AuditLogService {
-  constructor(private readonly prisma: PrismaService) {}
+export class AuditLogService extends BasePrismaService {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
 
   async getAuditLogs(query: {
     flagId?: string;
@@ -21,13 +24,13 @@ export class AuditLogService {
     } = query;
 
     const [logs, totalCount] = await Promise.all([
-      this.prisma.auditLog.findMany({
+      this.findMany('auditLog', {
         where: flagId ? { flagId } : {},
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
         orderBy: { [sort]: order },
       }),
-      this.prisma.auditLog.count({
+      this.count('auditLog', {
         where: flagId ? { flagId } : {},
       }),
     ]);
@@ -46,5 +49,26 @@ export class AuditLogService {
         hasPreviousPage: currentPage > 1,
       },
     };
+  }
+
+  async logAuditAction(
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    flagId: string,
+    flagName: string,
+    performedById: string,
+    details?: object,
+  ) {
+    if (!performedById) {
+      throw new BadRequestException('User ID is required for audit logging');
+    }
+    return this.create('auditLog', {
+      data: {
+        action,
+        flagId,
+        flagName,
+        performedById,
+        details: details ? JSON.stringify(details) : null,
+      },
+    });
   }
 }

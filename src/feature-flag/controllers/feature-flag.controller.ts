@@ -25,8 +25,8 @@ import {
 import { FeatureFlagService } from '../services/feature-flag.service';
 import { CreateFeatureFlagDto } from '../dtos/create-feature-flag.dto';
 import { UpdateFeatureFlagDto } from '../dtos/update-feature-flag.dto';
-import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
-import { RequestWithUser } from 'src/auth/types/request-with-user.type';
+import { JwtOrApiKeyGuard } from '../../common/guards/jwt-or-apikey.guard';
+import { RequestWithUser } from '../../auth/types/request-with-user.type';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')
@@ -173,10 +173,7 @@ export class FeatureFlagController {
   @ApiResponse({ status: 204, description: 'Feature flag deleted' })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteFlag(
-    @Param('id') id: string,
-    @Req() req: RequestWithUser,
-  ) {
+  async deleteFlag(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.featureFlagService.deleteFlag(id, req.user.sub);
   }
 }

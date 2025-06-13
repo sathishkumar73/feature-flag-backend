@@ -2,11 +2,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BasePrismaService } from '../../common/services/base-prisma.service';
+import { ApiKey } from '@prisma/client';
 
 @Injectable()
-export class ApiKeyService {
-  constructor(private prisma: PrismaService) {}
+export class ApiKeyService extends BasePrismaService {
+  constructor(protected readonly prisma: PrismaService) {
+    super(prisma);
+  }
 
   async generateAndStoreApiKey(
     userId: string,
@@ -15,7 +19,7 @@ export class ApiKeyService {
     const prefix = apiKeyPlain.slice(0, 8); // Use first 8 chars as prefix
     const hashedKey = await bcrypt.hash(apiKeyPlain, 10);
 
-    await this.prisma.apiKey.create({
+    await this.create<ApiKey>('apiKey', {
       data: {
         prefix,
         hashedKey,
@@ -27,15 +31,19 @@ export class ApiKeyService {
     return { apiKeyPlain };
   }
 
-  async revokeApiKey(id: number) {
-    return this.prisma.apiKey.update({
+  async revokeApiKey(id: number): Promise<ApiKey> {
+    return this.update<ApiKey>('apiKey', {
       where: { id },
       data: { isActive: false, updatedAt: new Date() },
     });
   }
 
-  async getActiveApiKey(userId: string) {
-    return this.prisma.apiKey.findFirst({
+  async getActiveApiKey(
+    userId: string,
+  ): Promise<Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'> | null> {
+    return this.findFirst<
+      Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'>
+    >('apiKey', {
       where: {
         isActive: true,
         owner: userId,
