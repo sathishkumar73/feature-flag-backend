@@ -5,14 +5,24 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
+
+interface PlaygroundJwtPayload {
+  scope: string;
+  sessionId: string;
+  permissions?: string[];
+  [key: string]: unknown;
+}
 
 @Injectable()
 export class PlaygroundJwtAuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers['authorization'];
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: PlaygroundJwtPayload }>();
+    const authHeader: string | undefined = request.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException(
@@ -20,15 +30,16 @@ export class PlaygroundJwtAuthGuard implements CanActivate {
       );
     }
 
-    const token = authHeader.split(' ')[1];
+    const token: string = authHeader.split(' ')[1];
 
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<PlaygroundJwtPayload>(token);
 
       if (
         payload.scope !== 'playground' ||
         !payload.sessionId ||
-        !payload.permissions?.includes('write') // adjust permission as needed
+        !Array.isArray(payload.permissions) ||
+        !payload.permissions.includes('write') // adjust permission as needed
       ) {
         throw new UnauthorizedException(
           'Invalid token scope, sessionId, or permissions',
