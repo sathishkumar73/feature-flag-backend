@@ -65,6 +65,7 @@ model PlaygroundFeatureFlag {
 
 model ApiKey {
   id          Int       @id @default(autoincrement())
+  prefix      String    // For fast lookup
   hashedKey   String    @unique
   owner       String?
   scopes      String?
@@ -78,6 +79,8 @@ model ApiKey {
   updatedById String?   @db.Uuid
   createdBy   User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([prefix]) // Index for fast lookup
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
