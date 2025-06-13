@@ -1,7 +1,7 @@
 import { Controller, Get, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { AuditLogService } from '../services/audit-logs.service';
 import { ApiSecurity, ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse } from '@nestjs/swagger';
-import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
+import { JwtOrApiKeyGuard } from '../../common/guards/jwt-or-apikey.guard';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')

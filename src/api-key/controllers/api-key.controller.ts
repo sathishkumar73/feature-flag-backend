@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiKeyService } from '../services/api-key.service';
-import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
+import { JwtOrApiKeyGuard } from '../../common/guards/jwt-or-apikey.guard';
 import {
   ApiTags,
   ApiSecurity,

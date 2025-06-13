@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RequestWithUser } from './types/request-with-user.type';
-import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
+import { JwtOrApiKeyGuard } from '../common/guards/jwt-or-apikey.guard';
 import { AuthCredentialsDto } from './dtos/auth-credentials.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
 

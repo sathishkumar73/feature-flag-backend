@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
 import { AuditLogService } from '../../audit-logs/services/audit-logs.service';
-import { BasePrismaService } from 'src/common/services/base-prisma.service';
+import { BasePrismaService } from '../../common/services/base-prisma.service';
 import { FeatureFlag } from '@prisma/client';
 
 @Injectable()

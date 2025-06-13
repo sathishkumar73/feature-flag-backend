@@ -2,8 +2,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { BasePrismaService } from 'src/common/services/base-prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BasePrismaService } from '../../common/services/base-prisma.service';
 import { ApiKey } from '@prisma/client';
 
 @Injectable()
