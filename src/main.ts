@@ -24,6 +24,19 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Authorization, x-api-key',
   });
 
+  // Enforce HTTPS: Block non-HTTPS requests
+  app.use((req, res, next) => {
+    // If behind a proxy (e.g., Heroku, NGINX), check x-forwarded-proto
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    if (!isSecure) {
+      res.status(400).json({
+        error: 'For security reasons, HTTP requests are blocked. Please use HTTPS.',
+      });
+      return;
+    }
+    next();
+  });
+
   // ✅ Enable Validation Globally
   app.useGlobalPipes(new ValidationPipe());
 
