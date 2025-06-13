@@ -76,6 +76,7 @@ model PlaygroundFeatureFlag {
 
 model ApiKey {
   id            Int       @id @default(autoincrement())
+  prefix        String    // New: prefix for fast lookup
   hashedKey     String    @unique
   owner         String?
   scopes        String?
@@ -90,4 +91,6 @@ model ApiKey {
   updatedById   String?   @db.Uuid
   createdBy     User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
   updatedBy     User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([prefix]) // Index for fast lookup
 }

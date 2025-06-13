@@ -12,10 +12,12 @@ export class ApiKeyService {
     userId: string,
   ): Promise<{ apiKeyPlain: string }> {
     const apiKeyPlain = randomBytes(32).toString('hex');
+    const prefix = apiKeyPlain.slice(0, 8); // Use first 8 chars as prefix
     const hashedKey = await bcrypt.hash(apiKeyPlain, 10);
 
     await this.prisma.apiKey.create({
       data: {
+        prefix,
         hashedKey,
         owner: userId,
         createdById: userId,
@@ -68,18 +70,13 @@ export class ApiKeyService {
 
   async validateApiKey(apiKey: string): Promise<boolean> {
     try {
-      const activeKeys = await this.prisma.apiKey.findMany({
-        where: { isActive: true },
+      const prefix = apiKey.slice(0, 8); // Extract prefix from provided key
+      const keyRecord = await this.prisma.apiKey.findFirst({
+        where: { prefix, isActive: true },
         select: { hashedKey: true },
       });
-
-      for (const key of activeKeys) {
-        const isValid = await bcrypt.compare(apiKey, key.hashedKey);
-        if (isValid) {
-          return true;
-        }
-      }
-      return false;
+      if (!keyRecord) return false;
+      return await bcrypt.compare(apiKey, keyRecord.hashedKey);
     } catch (error) {
       return false;
     }
