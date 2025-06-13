@@ -1,6 +1,18 @@
-import { Controller, Get, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuditLogService } from '../services/audit-logs.service';
-import { ApiSecurity, ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse } from '@nestjs/swagger';
+import {
+  ApiSecurity,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBadRequestResponse,
+} from '@nestjs/swagger';
 import { JwtOrApiKeyGuard } from '../../common/guards/jwt-or-apikey.guard';
 
 @ApiTags('Flags')
@@ -11,8 +23,13 @@ export class AuditLogsController {
   constructor(private readonly auditLogService: AuditLogService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get audit logs with optional filtering and pagination' })
-  @ApiResponse({ status: 200, description: 'Returns paginated list of audit logs' })
+  @ApiOperation({
+    summary: 'Get audit logs with optional filtering and pagination',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated list of audit logs',
+  })
   @ApiBadRequestResponse({ description: 'Invalid query parameters' })
   async getAuditLogs(
     @Query('flagId') flagId?: string,

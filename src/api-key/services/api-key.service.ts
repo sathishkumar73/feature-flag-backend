@@ -40,9 +40,7 @@ export class ApiKeyService extends BasePrismaService {
 
   async getActiveApiKey(
     userId: string,
-  ): Promise<
-    Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'> | null
-  > {
+  ): Promise<Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'> | null> {
     return this.findFirst<
       Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'>
     >('apiKey', {

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
 import { AuditLogService } from '../../audit-logs/services/audit-logs.service';
@@ -40,7 +44,7 @@ export class FeatureFlagService extends BasePrismaService {
 
     const bucket = hashUserToBucket(userId);
     return bucket < flag.rolloutPercentage;
-  }  
+  }
 
   async getFlagsForClient(environment: string) {
     return this.findMany<FeatureFlag>('featureFlag', {
@@ -122,13 +126,16 @@ export class FeatureFlagService extends BasePrismaService {
     };
   }
 
-  async createFlag(data: {
-    name: string;
-    description?: string;
-    enabled?: boolean;
-    environment: string;
-    rolloutPercentage?: number;
-  }, userId: string) {
+  async createFlag(
+    data: {
+      name: string;
+      description?: string;
+      enabled?: boolean;
+      environment: string;
+      rolloutPercentage?: number;
+    },
+    userId: string,
+  ) {
     const newFlag = await this.create<FeatureFlag>('featureFlag', {
       data: {
         name: data.name,
@@ -140,9 +147,15 @@ export class FeatureFlagService extends BasePrismaService {
         rolloutPercentage: data.rolloutPercentage ?? 0,
       },
     });
-    await this.auditLogService.logAuditAction('CREATE', newFlag.id, newFlag.name, userId, {
-      ...newFlag,
-    });
+    await this.auditLogService.logAuditAction(
+      'CREATE',
+      newFlag.id,
+      newFlag.name,
+      userId,
+      {
+        ...newFlag,
+      },
+    );
     return newFlag;
   }
 
@@ -190,9 +203,15 @@ export class FeatureFlagService extends BasePrismaService {
         where: { id },
       });
 
-      await this.auditLogService.logAuditAction('DELETE', flag.id, flag.name, userId, {
-        ...flag,
-      });
+      await this.auditLogService.logAuditAction(
+        'DELETE',
+        flag.id,
+        flag.name,
+        userId,
+        {
+          ...flag,
+        },
+      );
 
       return deletedFlag;
     } catch (error) {

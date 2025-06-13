@@ -4,6 +4,6 @@ import { ApiKeyService } from './services/api-key.service';
 
 @Module({
   providers: [ApiKeyService],
-  controllers: [ApiKeyController]
+  controllers: [ApiKeyController],
 })
 export class ApiKeyModule {}

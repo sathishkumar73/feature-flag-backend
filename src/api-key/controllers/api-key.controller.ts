@@ -57,7 +57,9 @@ export class ApiKeyController {
       await this.apiKeyService.revokeApiKey(activeKey.id);
     }
 
-    const { apiKeyPlain } = await this.apiKeyService.generateAndStoreApiKey(req.user.sub);
+    const { apiKeyPlain } = await this.apiKeyService.generateAndStoreApiKey(
+      req.user.sub,
+    );
     return { apiKey: apiKeyPlain };
   }
 

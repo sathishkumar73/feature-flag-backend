@@ -32,10 +32,7 @@ async function bootstrap() {
     .setTitle('Feature Flag API')
     .setDescription('API documentation for Feature Flag Platform')
     .setVersion('1.0')
-    .addApiKey(
-      { type: 'apiKey', name: 'x-api-key', in: 'header' },
-      'X-API-KEY',
-    )
+    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'X-API-KEY')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

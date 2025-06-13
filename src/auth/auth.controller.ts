@@ -12,7 +12,14 @@ import { AuthService } from './auth.service';
 import { RequestWithUser } from './types/request-with-user.type';
 import { JwtOrApiKeyGuard } from '../common/guards/jwt-or-apikey.guard';
 import { AuthCredentialsDto } from './dtos/auth-credentials.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
+  ApiInternalServerErrorResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -21,8 +28,13 @@ export class AuthController {
 
   @Post('signup')
   @ApiOperation({ summary: 'Sign up a new user' })
-  @ApiResponse({ status: 201, description: 'User created. Verification email sent.' })
-  @ApiBadRequestResponse({ description: 'Email and password are required or invalid.' })
+  @ApiResponse({
+    status: 201,
+    description: 'User created. Verification email sent.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Email and password are required or invalid.',
+  })
   async signup(@Body() body: AuthCredentialsDto) {
     const { email, password } = body;
 
@@ -44,7 +56,9 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login a user' })
   @ApiResponse({ status: 200, description: 'Login successful.' })
-  @ApiBadRequestResponse({ description: 'Email and password are required or invalid.' })
+  @ApiBadRequestResponse({
+    description: 'Email and password are required or invalid.',
+  })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials.' })
   async login(@Body() body: AuthCredentialsDto) {
     const { email, password } = body;
@@ -81,10 +95,7 @@ export class AuthController {
 
     const { sub: id, email } = req.user;
     if (!id || !email) {
-      throw new HttpException(
-        'Invalid user payload',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Invalid user payload', HttpStatus.BAD_REQUEST);
     }
 
     try {

@@ -44,7 +44,9 @@ export class PlaygroundController {
 
   @Post('api-key')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Generate temporary JWT API key for playground session' })
+  @ApiOperation({
+    summary: 'Generate temporary JWT API key for playground session',
+  })
   @ApiResponse({ status: 200, description: 'JWT API key token returned.' })
   @ApiBadRequestResponse({ description: 'sessionId is missing or invalid.' })
   async generatePlaygroundApiKey(@Body() body: RequestPlaygroundTokenDto) {
@@ -82,7 +84,9 @@ export class PlaygroundController {
   @Get('flags/:sessionId/:flagKey')
   @UseGuards(PlaygroundJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get a specific playground flag by sessionId and flagKey' })
+  @ApiOperation({
+    summary: 'Get a specific playground flag by sessionId and flagKey',
+  })
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'Returns the playground flag' })
   @ApiNotFoundResponse({ description: 'Playground flag not found' })
@@ -104,7 +108,10 @@ export class PlaygroundController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all playground flags for a session' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Returns all flags for the session' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all flags for the session',
+  })
   @ApiBadRequestResponse({ description: 'Missing sessionId query parameter' })
   async getFlagsForSession(@Query('sessionId') sessionId: string) {
     if (!sessionId) {

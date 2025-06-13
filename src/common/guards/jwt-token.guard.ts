@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -10,7 +15,9 @@ export class PlaygroundJwtAuthGuard implements CanActivate {
     const authHeader = request.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
 
     const token = authHeader.split(' ')[1];
@@ -23,7 +30,9 @@ export class PlaygroundJwtAuthGuard implements CanActivate {
         !payload.sessionId ||
         !payload.permissions?.includes('write') // adjust permission as needed
       ) {
-        throw new UnauthorizedException('Invalid token scope, sessionId, or permissions');
+        throw new UnauthorizedException(
+          'Invalid token scope, sessionId, or permissions',
+        );
       }
 
       // Attach payload to request.user for downstream usage if needed

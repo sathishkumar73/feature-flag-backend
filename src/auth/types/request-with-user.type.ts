@@ -5,4 +5,4 @@ export interface RequestWithUser extends Request {
     sub: string;
     email: string;
   };
-} 
+}

@@ -173,10 +173,7 @@ export class FeatureFlagController {
   @ApiResponse({ status: 204, description: 'Feature flag deleted' })
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteFlag(
-    @Param('id') id: string,
-    @Req() req: RequestWithUser,
-  ) {
+  async deleteFlag(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.featureFlagService.deleteFlag(id, req.user.sub);
   }
 }

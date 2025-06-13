@@ -12,7 +12,7 @@ export class PlaygroundService extends BasePrismaService {
   // Upsert a playground flag scoped by sessionId and flagKey
   async upsertFlag(
     sessionId: string,
-    data: { flagKey: string; enabled: boolean; rollout_percentage: number }
+    data: { flagKey: string; enabled: boolean; rollout_percentage: number },
   ): Promise<PlaygroundFeatureFlag> {
     const { flagKey, enabled, rollout_percentage } = data;
     return this.prisma.playgroundFeatureFlag.upsert({
@@ -39,8 +39,16 @@ export class PlaygroundService extends BasePrismaService {
   }
 
   // Fetch a specific playground flag by sessionId and flagKey
-  async getFlag(sessionId: string, flagKey: string): Promise<Pick<PlaygroundFeatureFlag, 'flag_key' | 'enabled' | 'rollout_percentage'> | null> {
-    return this.findUnique<Pick<PlaygroundFeatureFlag, 'flag_key' | 'enabled' | 'rollout_percentage'>>('playgroundFeatureFlag', {
+  async getFlag(
+    sessionId: string,
+    flagKey: string,
+  ): Promise<Pick<
+    PlaygroundFeatureFlag,
+    'flag_key' | 'enabled' | 'rollout_percentage'
+  > | null> {
+    return this.findUnique<
+      Pick<PlaygroundFeatureFlag, 'flag_key' | 'enabled' | 'rollout_percentage'>
+    >('playgroundFeatureFlag', {
       where: {
         session_id_flag_key: {
           session_id: sessionId,
