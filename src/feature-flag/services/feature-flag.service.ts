@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
 import { AuditLogService } from '../../audit-logs/services/audit-logs.service';
@@ -23,7 +23,7 @@ export class FeatureFlagService extends BasePrismaService {
     });
 
     if (!flag) {
-      throw new Error('Feature flag not found');
+      throw new NotFoundException('Feature flag not found');
     }
 
     if (!flag.enabled) {
@@ -183,7 +183,7 @@ export class FeatureFlagService extends BasePrismaService {
       });
 
       if (!flag) {
-        throw new Error(`Feature flag with ID ${id} not found.`);
+        throw new NotFoundException(`Feature flag with ID ${id} not found.`);
       }
 
       const deletedFlag = await this.delete<FeatureFlag>('featureFlag', {
@@ -210,7 +210,7 @@ export class FeatureFlagService extends BasePrismaService {
     });
 
     if (!flag) {
-      throw new Error(
+      throw new NotFoundException(
         `Feature flag "${flagName}" not found for environment "${environment}".`,
       );
     }
@@ -239,7 +239,7 @@ export class FeatureFlagService extends BasePrismaService {
     });
 
     if (!flag) {
-      throw new Error(
+      throw new NotFoundException(
         `Feature flag "${flagName}" not found for environment "${environment}".`,
       );
     }

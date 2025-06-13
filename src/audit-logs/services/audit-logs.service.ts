@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BasePrismaService } from 'src/common/services/base-prisma.service';
 
@@ -59,7 +59,7 @@ export class AuditLogService extends BasePrismaService {
     details?: object,
   ) {
     if (!performedById) {
-      throw new Error('User ID is required for audit logging');
+      throw new BadRequestException('User ID is required for audit logging');
     }
     return this.create('auditLog', {
       data: {
