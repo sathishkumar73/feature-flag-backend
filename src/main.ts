@@ -12,11 +12,17 @@ async function bootstrap() {
 
   app.enableCors({
     origin: async (origin, callback) => {
-      if (!origin) return callback(null, true); // Allow non-browser requests
       const allowedOrigins = await corsService.getAllowedOrigins();
+      console.log('CORS DEBUG:', { origin, allowedOrigins });
+      if (!origin) {
+        console.log('CORS DEBUG: No origin header, allowing request');
+        return callback(null, true); // Allow non-browser requests
+      }
       if (allowedOrigins.includes(origin)) {
+        console.log('CORS DEBUG: Origin allowed:', origin);
         callback(null, true);
       } else {
+        console.log('CORS DEBUG: Origin NOT allowed:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
