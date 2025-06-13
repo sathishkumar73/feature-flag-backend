@@ -33,4 +33,16 @@ describe('CorsService', () => {
     const result = await service.getAllowedOrigins();
     expect(result).toEqual(['https://foo.com', 'https://bar.com']);
   });
+
+  it('should handle subdomain and protocol edge cases', async () => {
+    mockPrisma.allowedOrigin.findMany.mockResolvedValue([
+      { origin: 'https://foo.com' },
+      { origin: 'http://bar.com' },
+      { origin: 'https://sub.foo.com' },
+    ]);
+    const result = await service.getAllowedOrigins();
+    expect(result).toContain('https://foo.com');
+    expect(result).toContain('http://bar.com');
+    expect(result).toContain('https://sub.foo.com');
+  });
 });
