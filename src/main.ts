@@ -3,13 +3,23 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { CorsService } from './common/services/cors.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const corsService = app.get(CorsService);
 
   app.enableCors({
-    origin: ['https://gradualrollout.com', 'https://app.gradualrollout.com', 'http://localhost:3000', 'https://test.gradualrollout.com', 'https://canary.gradualrollout.com'],
+    origin: async (origin, callback) => {
+      if (!origin) return callback(null, true); // Allow non-browser requests
+      const allowedOrigins = await corsService.getAllowedOrigins();
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,POST,PUT,DELETE,OPTIONS,PATCH',
     allowedHeaders: 'Content-Type, Authorization, x-api-key',
   });
