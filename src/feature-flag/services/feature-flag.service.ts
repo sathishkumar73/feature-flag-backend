@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashUserToBucket } from '../../utils/hash';
+import { AuditLogService } from '../../audit-logs/services/audit-logs.service';
 
 @Injectable()
 export class FeatureFlagService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogService: AuditLogService,
+  ) {}
 
   private async isFlagEnabledForUser(
     flagId: string,
@@ -133,7 +137,7 @@ export class FeatureFlagService {
         rolloutPercentage: data.rolloutPercentage ?? 0,
       },
     });
-    await this.logAuditAction('CREATE', newFlag.id, newFlag.name, userId, {
+    await this.auditLogService.logAuditAction('CREATE', newFlag.id, newFlag.name, userId, {
       ...newFlag,
     });
     return newFlag;
@@ -157,7 +161,7 @@ export class FeatureFlagService {
         updatedById: userId,
       },
     });
-    await this.logAuditAction(
+    await this.auditLogService.logAuditAction(
       'UPDATE',
       updatedFlag.id,
       updatedFlag.name,
@@ -183,7 +187,7 @@ export class FeatureFlagService {
         where: { id },
       });
 
-      await this.logAuditAction('DELETE', flag.id, flag.name, userId, {
+      await this.auditLogService.logAuditAction('DELETE', flag.id, flag.name, userId, {
         ...flag,
       });
 
@@ -253,30 +257,6 @@ export class FeatureFlagService {
   }
 
   async getAuditLogs(flagId?: string) {
-    return this.prisma.auditLog.findMany({
-      where: flagId ? { flagId } : {},
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async logAuditAction(
-    action: 'CREATE' | 'UPDATE' | 'DELETE',
-    flagId: string,
-    flagName: string,
-    performedById: string,
-    details?: object,
-  ) {
-    if (!performedById) {
-      throw new Error('User ID is required for audit logging');
-    }
-    return this.prisma.auditLog.create({
-      data: {
-        action,
-        flagId,
-        flagName,
-        performedById,
-        details: details ? JSON.stringify(details) : null,
-      },
-    });
+    return this.auditLogService.getAuditLogs({ flagId });
   }
 }

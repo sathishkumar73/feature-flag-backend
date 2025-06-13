@@ -47,4 +47,25 @@ export class AuditLogService {
       },
     };
   }
+
+  async logAuditAction(
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    flagId: string,
+    flagName: string,
+    performedById: string,
+    details?: object,
+  ) {
+    if (!performedById) {
+      throw new Error('User ID is required for audit logging');
+    }
+    return this.prisma.auditLog.create({
+      data: {
+        action,
+        flagId,
+        flagName,
+        performedById,
+        details: details ? JSON.stringify(details) : null,
+      },
+    });
+  }
 }
