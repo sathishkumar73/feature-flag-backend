@@ -18,6 +18,8 @@ import {
   ApiResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { RevokeApiKeyDto } from '../dtos/revoke-api-key.dto';
+import { ValidateApiKeyDto } from '../dtos/validate-api-key.dto';
 
 @ApiTags('API Keys')
 @ApiSecurity('X-API-KEY')
@@ -63,7 +65,7 @@ export class ApiKeyController {
   @ApiOperation({ summary: 'Revoke an active API key explicitly' })
   @ApiResponse({ status: 200, description: 'API key revoked successfully' })
   @ApiBadRequestResponse({ description: 'Invalid key id' })
-  async revokeApiKey(@Body() body: { id: number }) {
+  async revokeApiKey(@Body() body: RevokeApiKeyDto) {
     if (!body.id) {
       throw new BadRequestException('API key id is required');
     }
@@ -74,7 +76,7 @@ export class ApiKeyController {
   @ApiOperation({ summary: 'Validate an API key' })
   @ApiResponse({ status: 200, description: 'API key is valid' })
   @ApiBadRequestResponse({ description: 'Invalid or missing API key' })
-  async validateApiKey(@Body() body: { apiKey: string }) {
+  async validateApiKey(@Body() body: ValidateApiKeyDto) {
     if (!body.apiKey) {
       throw new BadRequestException('API key is required');
     }

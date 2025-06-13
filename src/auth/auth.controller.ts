@@ -11,13 +11,14 @@ import {
 import { AuthService } from './auth.service';
 import { RequestWithUser } from './types/request-with-user.type';
 import { JwtOrApiKeyGuard } from 'src/common/guards/jwt-or-apikey.guard';
+import { AuthCredentialsDto } from './dtos/auth-credentials.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  async signup(@Body() body: { email: string; password: string }) {
+  async signup(@Body() body: AuthCredentialsDto) {
     const { email, password } = body;
 
     if (!email || !password) {
@@ -36,7 +37,7 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
+  async login(@Body() body: AuthCredentialsDto) {
     const { email, password } = body;
 
     if (!email || !password) {
