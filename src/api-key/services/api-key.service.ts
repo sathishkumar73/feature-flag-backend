@@ -31,7 +31,7 @@ export class ApiKeyService extends BasePrismaService {
     return { apiKeyPlain };
   }
 
-  async revokeApiKey(id: number): Promise<ApiKey> {
+  async revokeApiKey(id: string): Promise<ApiKey> {
     return this.update<ApiKey>('apiKey', {
       where: { id },
       data: { isActive: false, updatedAt: new Date() },
@@ -90,5 +90,23 @@ export class ApiKeyService extends BasePrismaService {
     } catch (error) {
       return false;
     }
+  }
+
+  async getApiKeyHistory(userId: string) {
+    return this.prisma.apiKey.findMany({
+      where: { owner: userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        prefix: true,
+        hashedKey: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        description: true,
+      },
+    });
   }
 }

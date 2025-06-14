@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "ApiKey" ALTER COLUMN "id" DROP DEFAULT;
