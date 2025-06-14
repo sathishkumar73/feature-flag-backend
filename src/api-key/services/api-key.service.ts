@@ -70,11 +70,20 @@ export class ApiKeyService extends BasePrismaService {
       return { apiKeyPlain: null, apiKeyMeta: existingKey };
     }
 
-    // No active key found, create new
+    // Check if user has any API key history (active or revoked)
+    const keyHistory = await this.prisma.apiKey.findFirst({
+      where: { owner: userId },
+      select: { id: true },
+    });
+
+    if (keyHistory) {
+      // User has history but no active key; do not auto-generate
+      return { apiKeyPlain: null, apiKeyMeta: null };
+    }
+
+    // No history at all, create new
     const { apiKeyPlain } = await this.generateAndStoreApiKey(userId);
-
     const newKeyMeta = await this.getActiveApiKey(userId);
-
     return { apiKeyPlain, apiKeyMeta: newKeyMeta };
   }
 
