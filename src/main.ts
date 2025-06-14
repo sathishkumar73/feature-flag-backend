@@ -17,10 +17,8 @@ async function bootstrap() {
         return callback(null, true); // Allow non-browser requests
       }
       if (allowedOrigins.includes(origin)) {
-        console.log('CORS DEBUG: Origin allowed:', origin);
         callback(null, true);
       } else {
-        console.log('CORS DEBUG: Origin NOT allowed:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -29,17 +27,17 @@ async function bootstrap() {
   });
 
   // Enforce HTTPS: Block non-HTTPS requests
-  // app.use((req, res, next) => {
-  //   // If behind a proxy (e.g., Heroku, NGINX), check x-forwarded-proto
-  //   const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-  //   if (!isSecure) {
-  //     res.status(426).header('Upgrade', 'HTTPS').json({
-  //       error: 'For security reasons, HTTP requests are blocked. Please use HTTPS.',
-  //     });
-  //     return;
-  //   }
-  //   next();
-  // });
+  app.use((req, res, next) => {
+    // If behind a proxy (e.g., Heroku, NGINX), check x-forwarded-proto
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    if (!isSecure) {
+      res.status(426).header('Upgrade', 'HTTPS').json({
+        error: 'For security reasons, HTTP requests are blocked. Please use HTTPS.',
+      });
+      return;
+    }
+    next();
+  });
 
   // ✅ Enable Validation Globally
   app.useGlobalPipes(new ValidationPipe());

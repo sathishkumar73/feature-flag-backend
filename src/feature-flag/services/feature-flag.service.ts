@@ -47,33 +47,28 @@ export class FeatureFlagService extends BasePrismaService {
   }
 
   async getFlagsForClient(environment: string, apiKey: string) {
-    console.log('[getFlagsForClient] called with environment:', environment, 'apiKey:', apiKey ? apiKey.slice(0, 8) + '...' : undefined);
     const prefix = apiKey.slice(0, 8);
     const keyRecord = await this.prisma.apiKey.findFirst({
       where: { prefix, isActive: true },
       select: { hashedKey: true, owner: true },
     });
-    console.log('[getFlagsForClient] keyRecord:', keyRecord);
     if (!keyRecord) {
-      console.log('[getFlagsForClient] No keyRecord found for prefix:', prefix);
       return [];
     }
     const bcrypt = require('bcrypt');
     const isValid = await bcrypt.compare(apiKey, keyRecord.hashedKey);
-    console.log('[getFlagsForClient] isValid:', isValid);
     if (!isValid) {
-      console.log('[getFlagsForClient] API key hash mismatch');
       return [];
     }
     const userId = keyRecord.owner;
     if (!userId) {
-      console.log('[getFlagsForClient] No userId (owner) found for API key');
       return [];
     }
     // Now fetch flags for this user
+    const normalizedEnv = environment.toLowerCase();
     const flags = await this.findMany<FeatureFlag>('featureFlag', {
       where: {
-        environment,
+        environment: normalizedEnv,
         enabled: true,
         createdById: userId,
       },
@@ -84,7 +79,6 @@ export class FeatureFlagService extends BasePrismaService {
         rolloutPercentage: true,
       },
     });
-    console.log('[getFlagsForClient] Returning flags:', flags.length);
     return flags;
   }
 
@@ -163,12 +157,13 @@ export class FeatureFlagService extends BasePrismaService {
     },
     userId: string,
   ) {
+    const normalizedEnv = data.environment.toLowerCase();
     const newFlag = await this.create<FeatureFlag>('featureFlag', {
       data: {
         name: data.name,
         description: data.description,
         enabled: data.enabled ?? false,
-        environment: data.environment,
+        environment: normalizedEnv,
         createdById: userId,
         updatedById: userId,
         rolloutPercentage: data.rolloutPercentage ?? 0,
