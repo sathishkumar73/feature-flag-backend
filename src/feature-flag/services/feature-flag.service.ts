@@ -47,21 +47,31 @@ export class FeatureFlagService extends BasePrismaService {
   }
 
   async getFlagsForClient(environment: string, apiKey: string) {
-    // To find the correct API key, you need to hash the incoming apiKey and match it, or use the prefix for fast lookup
-    // Let's do prefix lookup, then bcrypt compare
+    console.log('[getFlagsForClient] called with environment:', environment, 'apiKey:', apiKey ? apiKey.slice(0, 8) + '...' : undefined);
     const prefix = apiKey.slice(0, 8);
     const keyRecord = await this.prisma.apiKey.findFirst({
       where: { prefix, isActive: true },
       select: { hashedKey: true, owner: true },
     });
-    if (!keyRecord) return [];
+    console.log('[getFlagsForClient] keyRecord:', keyRecord);
+    if (!keyRecord) {
+      console.log('[getFlagsForClient] No keyRecord found for prefix:', prefix);
+      return [];
+    }
     const bcrypt = require('bcrypt');
     const isValid = await bcrypt.compare(apiKey, keyRecord.hashedKey);
-    if (!isValid) return [];
+    console.log('[getFlagsForClient] isValid:', isValid);
+    if (!isValid) {
+      console.log('[getFlagsForClient] API key hash mismatch');
+      return [];
+    }
     const userId = keyRecord.owner;
-    if (!userId) return [];
+    if (!userId) {
+      console.log('[getFlagsForClient] No userId (owner) found for API key');
+      return [];
+    }
     // Now fetch flags for this user
-    return this.findMany<FeatureFlag>('featureFlag', {
+    const flags = await this.findMany<FeatureFlag>('featureFlag', {
       where: {
         environment,
         enabled: true,
@@ -74,6 +84,8 @@ export class FeatureFlagService extends BasePrismaService {
         rolloutPercentage: true,
       },
     });
+    console.log('[getFlagsForClient] Returning flags:', flags.length);
+    return flags;
   }
 
   private evaluateAdvancedRules(params: {
