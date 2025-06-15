@@ -45,7 +45,7 @@ export class ApiKeyController {
       apiKeyPlain: string | null;
       apiKeyMeta: Pick<
         ApiKey,
-        'id' | 'owner' | 'createdAt' | 'updatedAt'
+        'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'
       > | null;
     } = await this.apiKeyService.getOrCreateApiKey(req.user.sub);
     return { apiKey: apiKeyMeta, plainKey: apiKeyPlain };
@@ -96,5 +96,17 @@ export class ApiKeyController {
       throw new BadRequestException('Invalid API key');
     }
     return { valid: true };
+  }
+
+  @Get('history')
+  @ApiOperation({
+    summary: 'Get all API keys (active and revoked) for the authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all API keys for the user',
+  })
+  async getApiKeyHistory(@Request() req: RequestWithUser) {
+    return this.apiKeyService.getApiKeyHistory(req.user.sub);
   }
 }

@@ -31,7 +31,7 @@ export class ApiKeyService extends BasePrismaService {
     return { apiKeyPlain };
   }
 
-  async revokeApiKey(id: number): Promise<ApiKey> {
+  async revokeApiKey(id: string): Promise<ApiKey> {
     return this.update<ApiKey>('apiKey', {
       where: { id },
       data: { isActive: false, updatedAt: new Date() },
@@ -40,40 +40,65 @@ export class ApiKeyService extends BasePrismaService {
 
   async getActiveApiKey(
     userId: string,
-  ): Promise<Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'> | null> {
-    return this.findFirst<
-      Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'>
-    >('apiKey', {
-      where: {
-        isActive: true,
-        owner: userId,
-      },
-      select: {
-        id: true,
-        owner: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  ): Promise<Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'> | null> {
+    console.log('[ApiKeyService][getActiveApiKey] userId:', userId);
+    try {
+      const result = await this.findFirst<
+        Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'>
+      >('apiKey', {
+        where: {
+          isActive: true,
+          owner: userId,
+        },
+        select: {
+          id: true,
+          owner: true,
+          createdAt: true,
+          updatedAt: true,
+          hashedKey: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      console.log('[ApiKeyService][getActiveApiKey] result:', result);
+      return result;
+    } catch (err) {
+      console.error('[ApiKeyService][getActiveApiKey] Error:', err);
+      throw err;
+    }
   }
 
   async getOrCreateApiKey(userId: string): Promise<{
     apiKeyPlain: string | null;
-    apiKeyMeta: Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt'> | null;
+    apiKeyMeta: Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'> | null;
   }> {
+    console.log('[ApiKeyService][getOrCreateApiKey] userId:', userId);
     const existingKey = await this.getActiveApiKey(userId);
+    console.log('[ApiKeyService][getOrCreateApiKey] existingKey:', existingKey);
 
     if (existingKey) {
-      // Return metadata only, no plain key for security
       return { apiKeyPlain: null, apiKeyMeta: existingKey };
     }
 
-    // No active key found, create new
+    // Check if user has any API key history (active or revoked)
+    try {
+      const keyHistory = await this.prisma.apiKey.findFirst({
+        where: { owner: userId },
+        select: { id: true },
+      });
+      console.log('[ApiKeyService][getOrCreateApiKey] keyHistory:', keyHistory);
+
+      if (keyHistory) {
+        return { apiKeyPlain: null, apiKeyMeta: null };
+      }
+    } catch (err) {
+      console.error('[ApiKeyService][getOrCreateApiKey] Error in keyHistory lookup:', err);
+      throw err;
+    }
+
+    // No history at all, create new
     const { apiKeyPlain } = await this.generateAndStoreApiKey(userId);
-
     const newKeyMeta = await this.getActiveApiKey(userId);
-
+    console.log('[ApiKeyService][getOrCreateApiKey] newKeyMeta:', newKeyMeta);
     return { apiKeyPlain, apiKeyMeta: newKeyMeta };
   }
 
@@ -89,5 +114,23 @@ export class ApiKeyService extends BasePrismaService {
     } catch (error) {
       return false;
     }
+  }
+
+  async getApiKeyHistory(userId: string) {
+    return this.prisma.apiKey.findMany({
+      where: { owner: userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        prefix: true,
+        hashedKey: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        description: true,
+      },
+    });
   }
 }
