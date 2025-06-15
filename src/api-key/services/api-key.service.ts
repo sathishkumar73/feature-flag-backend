@@ -41,49 +41,64 @@ export class ApiKeyService extends BasePrismaService {
   async getActiveApiKey(
     userId: string,
   ): Promise<Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'> | null> {
-    return this.findFirst<
-      Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'>
-    >('apiKey', {
-      where: {
-        isActive: true,
-        owner: userId,
-      },
-      select: {
-        id: true,
-        owner: true,
-        createdAt: true,
-        updatedAt: true,
-        hashedKey: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    console.log('[ApiKeyService][getActiveApiKey] userId:', userId);
+    try {
+      const result = await this.findFirst<
+        Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'>
+      >('apiKey', {
+        where: {
+          isActive: true,
+          owner: userId,
+        },
+        select: {
+          id: true,
+          owner: true,
+          createdAt: true,
+          updatedAt: true,
+          hashedKey: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      console.log('[ApiKeyService][getActiveApiKey] result:', result);
+      return result;
+    } catch (err) {
+      console.error('[ApiKeyService][getActiveApiKey] Error:', err);
+      throw err;
+    }
   }
 
   async getOrCreateApiKey(userId: string): Promise<{
     apiKeyPlain: string | null;
     apiKeyMeta: Pick<ApiKey, 'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'> | null;
   }> {
+    console.log('[ApiKeyService][getOrCreateApiKey] userId:', userId);
     const existingKey = await this.getActiveApiKey(userId);
+    console.log('[ApiKeyService][getOrCreateApiKey] existingKey:', existingKey);
 
     if (existingKey) {
-      // Return metadata only, no plain key for security
       return { apiKeyPlain: null, apiKeyMeta: existingKey };
     }
 
     // Check if user has any API key history (active or revoked)
-    const keyHistory = await this.prisma.apiKey.findFirst({
-      where: { owner: userId },
-      select: { id: true },
-    });
+    try {
+      const keyHistory = await this.prisma.apiKey.findFirst({
+        where: { owner: userId },
+        select: { id: true },
+      });
+      console.log('[ApiKeyService][getOrCreateApiKey] keyHistory:', keyHistory);
 
-    if (keyHistory) {
-      // User has history but no active key; do not auto-generate
-      return { apiKeyPlain: null, apiKeyMeta: null };
+      if (keyHistory) {
+        return { apiKeyPlain: null, apiKeyMeta: null };
+      }
+    } catch (err) {
+      console.error('[ApiKeyService][getOrCreateApiKey] Error in keyHistory lookup:', err);
+      throw err;
     }
 
     // No history at all, create new
     const { apiKeyPlain } = await this.generateAndStoreApiKey(userId);
     const newKeyMeta = await this.getActiveApiKey(userId);
+    console.log('[ApiKeyService][getOrCreateApiKey] newKeyMeta:', newKeyMeta);
     return { apiKeyPlain, apiKeyMeta: newKeyMeta };
   }
 
