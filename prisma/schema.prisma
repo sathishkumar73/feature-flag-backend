@@ -88,6 +88,7 @@ model wait_list_signup {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   email      String   @unique
+  mobile     String   // New mandatory field for mobile number
   company    String?
   role       String?
   challenges String?
