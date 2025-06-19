@@ -23,7 +23,7 @@ async function bootstrap() {
       }
     },
     methods: 'GET,POST,PUT,DELETE,OPTIONS,PATCH',
-    allowedHeaders: 'Content-Type, Authorization, x-api-key',
+    allowedHeaders: 'Content-Type, Authorization, x-api-key, x-user-email',
   });
 
   // Enforce HTTPS: Block non-HTTPS requests

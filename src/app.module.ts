@@ -9,6 +9,7 @@ import { ApiKeyModule } from './api-key/api-key.module';
 import { AuthModule } from './auth/auth.module';
 import { CorsService } from './common/services/cors.service';
 import { JwtOrApiKeyGuard } from './common/guards/jwt-or-apikey.guard';
+import { WaitListSignupModule } from './wait-list-signup/wait-list-signup.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { JwtOrApiKeyGuard } from './common/guards/jwt-or-apikey.guard';
     PlaygroundModule,
     ApiKeyModule,
     AuthModule,
+    WaitListSignupModule,
   ],
   controllers: [],
   providers: [PrismaService, CorsService, JwtOrApiKeyGuard],
