@@ -88,6 +88,7 @@ model wait_list_signup {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   email      String   @unique
+  status     WaitListStatus @default(PENDING)
   company    String?
   role       String?
   challenges String?
@@ -109,4 +110,10 @@ enum UserRole {
   ADMIN
   DEV
   PRODUCT_MANAGER
+}
+
+enum WaitListStatus {
+  APPROVED
+  PENDING
+  REVOKED
 }
