@@ -1,10 +1,14 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { generateInviteToken } from '../utils/jwt';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class WaitListSignupService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async ensureRootUser(email: string) {
     const isRoot = await this.prisma.root_users.findUnique({ where: { email } });
@@ -28,7 +32,10 @@ export class WaitListSignupService {
         update: { invite_token },
         create: { email, invite_token },
       });
-      // Optionally: return or send invite_token to frontend/email
+      // Send invite email
+      const inviteLink = `${process.env.FRONTEND_URL}/invite?token=${invite_token}`;
+      const firstName = email.split('@')[0];
+      await this.mailService.sendBetaInvite(email, firstName, inviteLink);
       return { ...updated, invite_token };
     } else if (status === 'REVOKED') {
       // Remove from beta_users
