@@ -50,6 +50,17 @@ export class AuthService {
       },
     });
 
+    await this.prisma.beta_users.updateMany({
+      where: {
+        email: user.email,
+        userId: null,
+      },
+      data: {
+        userId: user.id,
+        first_login_at: new Date(),
+      },
+    });
+
     return {
       message: 'User created. Verification email sent.',
       user: data.user,
@@ -95,6 +106,18 @@ export class AuthService {
       },
     });
 
+    // Link beta_users entry if exists for this email and userId is null
+    await this.prisma.beta_users.updateMany({
+      where: {
+        email: user.email,
+        userId: user.id,
+      },
+      data: {
+        userId: user.id,
+        first_login_at: new Date(),
+      },
+    });
+
     return {
       message: 'Login successful',
       session: data,
@@ -107,6 +130,17 @@ export class AuthService {
       where: { id },
       create: { id, email, name: defaultName, role: 'USER' },
       update: { email, name: defaultName },
+    });
+    // Link beta_users entry if exists for this email and userId is null
+    await this.prisma.beta_users.updateMany({
+      where: {
+        email,
+        userId: null,
+      },
+      data: {
+        userId: id,
+        first_login_at: new Date(),
+      },
     });
     return { message: 'User synced' };
   }
