@@ -7,6 +7,7 @@ import {
   ForbiddenException,
   Body,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +18,7 @@ import {
 import { WaitListSignupService } from './wait-list-signup.service';
 import { Request } from 'express';
 import { verifyInviteToken } from '../utils/jwt';
+import { JwtOrApiKeyGuard } from '../common/guards/jwt-or-apikey.guard';
 
 @ApiTags('Wait List Signup')
 @Controller('wait-list-signup')
@@ -63,6 +65,21 @@ export class WaitListSignupController {
     } catch (err) {
       return { valid: false, error: err.message };
     }
+  }
+
+  @ApiOperation({ summary: 'Get invite token for a beta user by email' })
+  @ApiResponse({ status: 200, description: 'Returns invite token if user is in beta_users' })
+  @Get('invite-token')
+  @UseGuards(JwtOrApiKeyGuard)
+  @HttpCode(HttpStatus.OK)
+  async getInviteToken(@Req() req: Request) {
+    const email = (req.query.email as string) || (req.headers['x-user-email'] as string);
+    if (!email) throw new ForbiddenException('No user email provided');
+    const inviteToken = await this.waitListSignupService.getInviteTokenByEmail(email);
+    if (!inviteToken) {
+      return { found: false };
+    }
+    return { found: true, invite_token: inviteToken };
   }
 
   private async assertRootUser(req: Request) {

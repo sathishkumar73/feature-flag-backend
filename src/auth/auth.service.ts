@@ -104,7 +104,7 @@ export class AuthService {
       },
     });
 
-    await this.prisma.beta_users.update({
+    await this.prisma.beta_users.updateMany({
       where: {
         email,
         userId: userId,

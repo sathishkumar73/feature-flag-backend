@@ -65,4 +65,9 @@ export class WaitListSignupService {
     const betaUser = await this.prisma.beta_users.findFirst({ where: { invite_token: token } });
     return betaUser ? betaUser.email : null;
   }
+
+  async getInviteTokenByEmail(email: string): Promise<string | null> {
+    const betaUser = await this.prisma.beta_users.findUnique({ where: { email } });
+    return betaUser?.invite_token || null;
+  }
 }
