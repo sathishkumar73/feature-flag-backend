@@ -21,6 +21,7 @@ model User {
   featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreatedBy")
   featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdatedBy")
   allowedOriginsAdded AllowedOrigin[] @relation("UserAddedOrigins")
+  betaUser            beta_users?
 }
 
 model FeatureFlag {
@@ -88,6 +89,7 @@ model wait_list_signup {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   email      String   @unique
+  status     WaitListStatus @default(PENDING)
   company    String?
   role       String?
   challenges String?
@@ -104,9 +106,32 @@ model AllowedOrigin {
   addedBy   User?    @relation("UserAddedOrigins", fields: [addedById], references: [id])
 }
 
+model root_users {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model beta_users {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String   @unique
+  userId         String?  @unique @db.Uuid
+  user           User?    @relation(fields: [userId], references: [id])
+  first_login_at DateTime?
+  last_login_at  DateTime?
+  invite_token   String?
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+}
+
 enum UserRole {
   USER
   ADMIN
   DEV
   PRODUCT_MANAGER
+}
+
+enum WaitListStatus {
+  APPROVED
+  PENDING
+  REVOKED
 }
