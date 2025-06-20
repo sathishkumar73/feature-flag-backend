@@ -21,7 +21,7 @@ export class WaitListSignupService {
 
     if (status === 'APPROVED') {
       // Generate invite token
-      const invite_token = generateInviteToken(email);
+      const invite_token = generateInviteToken();
       // Upsert beta_users entry with invite_token
       await this.prisma.beta_users.upsert({
         where: { email },
@@ -52,5 +52,10 @@ export class WaitListSignupService {
   async verifyBetaUserInviteToken(email: string, token: string): Promise<boolean> {
     const betaUser = await this.prisma.beta_users.findUnique({ where: { email } });
     return !!(betaUser && betaUser.invite_token === token);
+  }
+
+  async verifyBetaUserInviteTokenByToken(token: string): Promise<string | null> {
+    const betaUser = await this.prisma.beta_users.findFirst({ where: { invite_token: token } });
+    return betaUser ? betaUser.email : null;
   }
 }

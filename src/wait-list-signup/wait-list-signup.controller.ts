@@ -54,13 +54,12 @@ export class WaitListSignupController {
   @HttpCode(HttpStatus.OK)
   async verifyInvite(@Body('token') token: string) {
     try {
-      const payload = verifyInviteToken(token);
-      // Use service method to check if invite_token matches
-      const isValid = await this.waitListSignupService.verifyBetaUserInviteToken(payload.email, token);
-      if (!isValid) {
+      // Use service method to look up beta_users by invite_token
+      const email = await this.waitListSignupService.verifyBetaUserInviteTokenByToken(token);
+      if (!email) {
         return { valid: false, error: 'Token does not match or user not found' };
       }
-      return { valid: true, email: payload.email };
+      return { valid: true, email };
     } catch (err) {
       return { valid: false, error: err.message };
     }

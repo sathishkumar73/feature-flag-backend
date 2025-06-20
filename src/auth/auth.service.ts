@@ -9,15 +9,15 @@ export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Sign up a new user via Supabase, then mirror into Prisma.
+   * PUBLIC  ────────────────
+   * Sign‑up a new user via Supabase email/password.
    */
   async signup(email: string, password: string) {
-    // 1) Create the user in Supabase
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: 'http://localhost:3000/auth/verify-email',
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/verify-email`,
       },
     });
 
@@ -33,33 +33,7 @@ export class AuthService {
       );
     }
 
-    const defaultName = user.email.split('@')[0];
-
-    // 2) Mirror into Prisma User table
-    await this.prisma.user.upsert({
-      where: { id: user.id },
-      create: {
-        id: user.id, // reuse Supabase UUID
-        email: user.email,
-        name: defaultName,
-        role: 'USER', // default role
-      },
-      update: {
-        email: user.email, // sync email if it ever changes
-        name: defaultName, // keep name in sync
-      },
-    });
-
-    await this.prisma.beta_users.updateMany({
-      where: {
-        email: user.email,
-        userId: null,
-      },
-      data: {
-        userId: user.id,
-        first_login_at: new Date(),
-      },
-    });
+    await this.syncUserToDatabase(user.id, user.email);
 
     return {
       message: 'User created. Verification email sent.',
@@ -68,14 +42,11 @@ export class AuthService {
   }
 
   /**
-   * Authenticate via Supabase, then ensure Prisma user exists.
+   * PUBLIC  ────────────────
+   * Log‑in via Supabase email/password and ensure Prisma mirror exists.
    */
   async login(email: string, password: string) {
-    // 1) Let Supabase verify credentials
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
@@ -89,34 +60,7 @@ export class AuthService {
       );
     }
 
-    const defaultName = user.email.split('@')[0];
-
-    // 2) Upsert into Prisma User table
-    await this.prisma.user.upsert({
-      where: { id: user.id },
-      create: {
-        id: user.id,
-        email: user.email,
-        name: defaultName,
-        role: 'USER',
-      },
-      update: {
-        email: user.email, // sync email
-        name: defaultName, // sync name
-      },
-    });
-
-    // Link beta_users entry if exists for this email and userId is null
-    await this.prisma.beta_users.updateMany({
-      where: {
-        email: user.email,
-        userId: user.id,
-      },
-      data: {
-        userId: user.id,
-        first_login_at: new Date(),
-      },
-    });
+    await this.syncUserToDatabase(user.id, user.email);
 
     return {
       message: 'Login successful',
@@ -124,24 +68,50 @@ export class AuthService {
     };
   }
 
+  /**
+   * PUBLIC  ────────────────
+   * Manual sync helper (used e.g. in background jobs).
+   */
   async upsertUser(id: string, email: string) {
-    const defaultName = email.split('@')[0];
+    await this.syncUserToDatabase(id, email);
+    return { message: 'User synced' };
+  }
+
+  // ──────────────────────── PRIVATE HELPERS ──────────────────────── //
+
+  private getDefaultName(email: string): string {
+    return email.split('@')[0];
+  }
+
+  /**
+   * Mirrors a Supabase user into Prisma `user` table and links any
+   * `beta_users` rows that share the same email.
+   */
+  private async syncUserToDatabase(userId: string, email: string) {
+    const defaultName = this.getDefaultName(email);
+
     await this.prisma.user.upsert({
-      where: { id },
-      create: { id, email, name: defaultName, role: 'USER' },
-      update: { email, name: defaultName },
+      where: { id: userId },
+      create: {
+        id: userId,
+        email,
+        name: defaultName,
+        role: 'USER',
+      },
+      update: {
+        email,
+        name: defaultName,
+      },
     });
-    // Link beta_users entry if exists for this email and userId is null
-    await this.prisma.beta_users.updateMany({
+
+    await this.prisma.beta_users.update({
       where: {
         email,
-        userId: null,
+        userId: userId,
       },
       data: {
-        userId: id,
-        first_login_at: new Date(),
+        last_login_at: new Date(),
       },
     });
-    return { message: 'User synced' };
   }
 }
