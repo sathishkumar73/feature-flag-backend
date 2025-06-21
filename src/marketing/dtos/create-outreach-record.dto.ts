@@ -1,4 +1,6 @@
-import { IsString, IsDate, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDate } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { Outcome, Status } from '@prisma/client';
 
 export class CreateOutreachRecordDto {
   @IsString()
@@ -11,19 +13,20 @@ export class CreateOutreachRecordDto {
   handle: string;
 
   @IsDate()
+  @Transform(({ value }) => new Date(value))
   outreachDate: Date;
 
   @IsString()
   message: string;
 
-  @IsString()
-  status: string;
+  @IsEnum(Status)
+  status: Status;
 
-  @IsString()
-  outcome: string;
+  @IsEnum(Outcome)
+  outcome: Outcome;
 
   @IsOptional()
-  @IsDate()
+  @Type(() => Date)
   responseDate?: Date;
 
   @IsOptional()
