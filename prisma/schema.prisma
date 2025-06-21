@@ -10,17 +10,17 @@ datasource db {
 
 model User {
   name                String
-  email               String        @unique
-  role                UserRole      @default(USER)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  id                  String        @id @default(uuid()) @db.Uuid
-  apiKeysCreated      ApiKey[]      @relation("ApiKeyCreatedBy")
-  apiKeysUpdated      ApiKey[]      @relation("ApiKeyUpdatedBy")
-  auditLogsPerformed  AuditLog[]    @relation("AuditLogPerformedBy")
-  featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreatedBy")
-  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdatedBy")
+  email               String          @unique
+  role                UserRole        @default(USER)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  id                  String          @id @default(uuid()) @db.Uuid
   allowedOriginsAdded AllowedOrigin[] @relation("UserAddedOrigins")
+  apiKeysCreated      ApiKey[]        @relation("ApiKeyCreatedBy")
+  apiKeysUpdated      ApiKey[]        @relation("ApiKeyUpdatedBy")
+  auditLogsPerformed  AuditLog[]      @relation("AuditLogPerformedBy")
+  featureFlagsCreated FeatureFlag[]   @relation("FeatureFlagCreatedBy")
+  featureFlagsUpdated FeatureFlag[]   @relation("FeatureFlagUpdatedBy")
   betaUser            beta_users?
 }
 
@@ -65,8 +65,6 @@ model PlaygroundFeatureFlag {
 }
 
 model ApiKey {
-  id          String   @id @default(uuid()) @db.Uuid
-  prefix      String    // For fast lookup
   hashedKey   String    @unique
   owner       String?
   scopes      String?
@@ -78,22 +76,24 @@ model ApiKey {
   isActive    Boolean   @default(true)
   createdById String?   @db.Uuid
   updatedById String?   @db.Uuid
+  prefix      String
+  id          String    @id @default(uuid()) @db.Uuid
   createdBy   User?     @relation("ApiKeyCreatedBy", fields: [createdById], references: [id])
   updatedBy   User?     @relation("ApiKeyUpdatedBy", fields: [updatedById], references: [id])
 
-  @@index([prefix]) // Index for fast lookup
+  @@index([prefix])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model wait_list_signup {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
-  email      String   @unique
-  status     WaitListStatus @default(PENDING)
+  email      String         @unique
   company    String?
   role       String?
   challenges String?
-  created_at DateTime @default(now()) @db.Timestamptz(6)
+  created_at DateTime       @default(now()) @db.Timestamptz(6)
+  status     WaitListStatus @default(PENDING)
 }
 
 model AllowedOrigin {
@@ -107,20 +107,35 @@ model AllowedOrigin {
 }
 
 model root_users {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email     String   @unique
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String   @unique
   created_at DateTime @default(now()) @db.Timestamptz(6)
 }
 
 model beta_users {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email          String   @unique
-  userId         String?  @unique @db.Uuid
-  user           User?    @relation(fields: [userId], references: [id])
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String    @unique
+  userId         String?   @unique @db.Uuid
   first_login_at DateTime?
   last_login_at  DateTime?
   invite_token   String?
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  user           User?     @relation(fields: [userId], references: [id])
+}
+
+model OutreachRecord {
+  id           String    @id
+  name         String
+  platform     String
+  handle       String
+  outreachDate DateTime
+  message      String
+  status       Status    @default(Sent)
+  outcome      Outcome   @default(Pending)
+  responseDate DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime
 }
 
 enum UserRole {
@@ -134,4 +149,18 @@ enum WaitListStatus {
   APPROVED
   PENDING
   REVOKED
+}
+
+enum Outcome {
+  Pending
+  Positive
+  Negative
+  Neutral
+}
+
+enum Status {
+  Sent
+  Responded
+  Declined
+  Bounced
 }
