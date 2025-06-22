@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { CorsService } from './common/services/cors.service';
 import { JwtOrApiKeyGuard } from './common/guards/jwt-or-apikey.guard';
 import { WaitListSignupModule } from './wait-list-signup/wait-list-signup.module';
+import { MarketingModule } from './marketing/marketing.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { WaitListSignupModule } from './wait-list-signup/wait-list-signup.module
     ApiKeyModule,
     AuthModule,
     WaitListSignupModule,
+    MarketingModule,
   ],
   controllers: [],
   providers: [PrismaService, CorsService, JwtOrApiKeyGuard],
