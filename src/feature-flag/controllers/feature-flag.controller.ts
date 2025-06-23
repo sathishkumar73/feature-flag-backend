@@ -151,8 +151,8 @@ export class FeatureFlagController {
   @ApiQuery({ name: 'flagId', required: false, example: '123' })
   @ApiResponse({ status: 200, description: 'Returns audit logs' })
   @Get('audit-logs')
-  async getAuditLogs(@Query('flagId') flagId?: string) {
-    return this.featureFlagService.getAuditLogs(flagId);
+  async getAuditLogs(@Req() req: RequestWithUser, @Query('flagId') flagId?: string) {
+    return this.featureFlagService.getAuditLogs(req.user.sub, flagId);
   }
 
   @ApiOperation({ summary: 'Create a new feature flag' })

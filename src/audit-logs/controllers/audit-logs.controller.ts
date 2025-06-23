@@ -4,6 +4,7 @@ import {
   Query,
   UseGuards,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { AuditLogService } from '../services/audit-logs.service';
 import {
@@ -12,8 +13,10 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBadRequestResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtOrApiKeyGuard } from '../../common/guards/jwt-or-apikey.guard';
+import { RequestWithUser } from '../../auth/types/request-with-user.type';
 
 @ApiTags('Flags')
 @ApiSecurity('X-API-KEY')
@@ -24,14 +27,16 @@ export class AuditLogsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get audit logs with optional filtering and pagination',
+    summary: 'Get audit logs belonging to the authenticated user',
   })
+  @ApiQuery({ name: 'flagId', required: false, example: '123' })
   @ApiResponse({
     status: 200,
-    description: 'Returns paginated list of audit logs',
+    description: 'Returns paginated list of audit logs for this user',
   })
   @ApiBadRequestResponse({ description: 'Invalid query parameters' })
   async getAuditLogs(
+    @Req() req: RequestWithUser,
     @Query('flagId') flagId?: string,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
@@ -44,12 +49,14 @@ export class AuditLogsController {
     if (isNaN(pageNum) || pageNum < 1) {
       throw new BadRequestException('Page must be a positive number');
     }
-
     if (isNaN(limitNum) || limitNum < 1) {
       throw new BadRequestException('Limit must be a positive number');
     }
 
+    const userId = req.user.sub;
+
     return this.auditLogService.getAuditLogs({
+      userId,
       flagId,
       page: pageNum,
       limit: limitNum,

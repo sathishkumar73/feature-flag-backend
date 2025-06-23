@@ -1,6 +1,10 @@
-import { IsString, IsDate, IsOptional } from 'class-validator';
+import { IsString, IsDate, IsOptional, IsEnum } from 'class-validator';
+import { Outcome, Status } from '@prisma/client';
 
 export class UpdateOutreachRecordDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
   @IsOptional()
   @IsString()
   name?: string;
@@ -22,12 +26,12 @@ export class UpdateOutreachRecordDto {
   message?: string;
 
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(Status)
+  status?: Status;
 
   @IsOptional()
-  @IsString()
-  outcome?: string;
+  @IsEnum(Outcome)
+  outcome?: Outcome;
 
   @IsOptional()
   @IsDate()

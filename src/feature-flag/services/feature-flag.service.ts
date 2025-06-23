@@ -300,7 +300,7 @@ export class FeatureFlagService extends BasePrismaService {
     };
   }
 
-  async getAuditLogs(flagId?: string) {
-    return this.auditLogService.getAuditLogs({ flagId });
+  async getAuditLogs(userId: string, flagId?: string) {
+    return this.auditLogService.getAuditLogs({ userId, flagId });
   }
 }

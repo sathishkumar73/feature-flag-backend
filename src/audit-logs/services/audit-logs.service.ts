@@ -8,7 +8,11 @@ export class AuditLogService extends BasePrismaService {
     super(prisma);
   }
 
+  /**
+   * Retrieves audit logs owned by a specific user, with optional filtering and pagination.
+   */
   async getAuditLogs(query: {
+    userId: string;
     flagId?: string;
     page?: number;
     limit?: number;
@@ -16,6 +20,7 @@ export class AuditLogService extends BasePrismaService {
     order?: 'asc' | 'desc';
   }) {
     const {
+      userId,
       flagId,
       page = 1,
       limit = 10,
@@ -23,34 +28,45 @@ export class AuditLogService extends BasePrismaService {
       order = 'desc',
     } = query;
 
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+
+    // Build the where clause to enforce user scope and optional flagId
+    const whereClause: Record<string, any> = { performedById: userId };
+    if (flagId) {
+      whereClause.flagId = flagId;
+    }
+
+    // Parallel fetch of data and count
     const [logs, totalCount] = await Promise.all([
       this.findMany('auditLog', {
-        where: flagId ? { flagId } : {},
-        skip: (Number(page) - 1) * Number(limit),
-        take: Number(limit),
+        where: whereClause,
+        skip: (page - 1) * limit,
+        take: limit,
         orderBy: { [sort]: order },
       }),
-      this.count('auditLog', {
-        where: flagId ? { flagId } : {},
-      }),
+      this.count('auditLog', { where: whereClause }),
     ]);
 
-    const totalPages = Math.ceil(totalCount / Number(limit));
-    const currentPage = Number(page);
+    const totalPages = Math.ceil(totalCount / limit);
 
     return {
       data: logs,
       meta: {
         totalCount,
         totalPages,
-        currentPage,
-        limit: Number(limit),
-        hasNextPage: currentPage < totalPages,
-        hasPreviousPage: currentPage > 1,
+        currentPage: page,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
     };
   }
 
+  /**
+   * Logs audit actions (CREATE, UPDATE, DELETE) for feature flags.
+   */
   async logAuditAction(
     action: 'CREATE' | 'UPDATE' | 'DELETE',
     flagId: string,
