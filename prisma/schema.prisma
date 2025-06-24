@@ -22,6 +22,7 @@ model User {
   featureFlagsCreated FeatureFlag[]   @relation("FeatureFlagCreatedBy")
   featureFlagsUpdated FeatureFlag[]   @relation("FeatureFlagUpdatedBy")
   betaUser            beta_users?
+  gcpConnections      GcpConnection[] @relation("UserGcpConnections")
 }
 
 model FeatureFlag {
@@ -161,6 +162,21 @@ model DailyProgress {
   CampaignTarget   CampaignTarget @relation(fields: [campaignTargetId], references: [id], onDelete: Cascade)
 
   @@unique([campaignTargetId, date])
+}
+
+model GcpConnection {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  accessToken   String    // Encrypted access token
+  refreshToken  String?   // Encrypted refresh token
+  expiresAt     DateTime
+  activeProjectId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation("UserGcpConnections", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@index([userId])
 }
 
 enum UserRole {

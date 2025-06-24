@@ -12,6 +12,7 @@ import {
   HttpCode,
   UseGuards,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
@@ -78,13 +79,18 @@ export class FeatureFlagController {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+
     return this.featureFlagService.getFlags({
       environment,
       page: isNaN(pageNum) ? 1 : pageNum,
       limit: isNaN(limitNum) ? 10 : limitNum,
       sort,
       order,
-      userId: req.user.sub,
+      userId,
     });
   }
 
@@ -152,7 +158,11 @@ export class FeatureFlagController {
   @ApiResponse({ status: 200, description: 'Returns audit logs' })
   @Get('audit-logs')
   async getAuditLogs(@Req() req: RequestWithUser, @Query('flagId') flagId?: string) {
-    return this.featureFlagService.getAuditLogs(req.user.sub, flagId);
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    return this.featureFlagService.getAuditLogs(userId, flagId);
   }
 
   @ApiOperation({ summary: 'Create a new feature flag' })
@@ -163,7 +173,11 @@ export class FeatureFlagController {
     @Body() body: CreateFeatureFlagDto,
     @Req() req: RequestWithUser,
   ) {
-    return this.featureFlagService.createFlag(body, req.user.sub);
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    return this.featureFlagService.createFlag(body, userId);
   }
 
   @ApiOperation({ summary: 'Update an existing feature flag by ID' })
@@ -174,7 +188,11 @@ export class FeatureFlagController {
     @Body() body: UpdateFeatureFlagDto,
     @Req() req: RequestWithUser,
   ) {
-    return this.featureFlagService.updateFlag(id, body, req.user.sub);
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    return this.featureFlagService.updateFlag(id, body, userId);
   }
 
   @ApiOperation({ summary: 'Delete a feature flag by ID' })
@@ -182,6 +200,10 @@ export class FeatureFlagController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteFlag(@Param('id') id: string, @Req() req: RequestWithUser) {
-    return this.featureFlagService.deleteFlag(id, req.user.sub);
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    return this.featureFlagService.deleteFlag(id, userId);
   }
 }

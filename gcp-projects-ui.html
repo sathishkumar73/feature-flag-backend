@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Projects - Feature Flag Backend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .connect-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .connect-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .project-card.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+        }
+
+        .project-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .project-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .project-info h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+
+        .project-id {
+            font-size: 0.9rem;
+            color: #666;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: #f5f5f5;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .project-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .project-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .stats-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .project-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 GCP Projects</h1>
+            <p>Manage your Google Cloud Platform projects for feature flag deployment</p>
+        </div>
+
+        <div class="connect-section" id="connectSection">
+            <h2>Connect Your GCP Account</h2>
+            <p style="margin: 1rem 0; color: #666;">Connect your Google Cloud Platform account to view and manage your projects.</p>
+            <button class="connect-btn" id="connectBtn" onclick="initiateGcpAuth()">
+                🔗 Connect GCP Account
+            </button>
+        </div>
+
+        <div class="stats-bar" id="statsBar" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalProjects">0</div>
+                    <div class="stat-label">Total Projects</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="activeProjects">0</div>
+                    <div class="stat-label">Active Projects</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="selectedProject">-</div>
+                    <div class="stat-label">Selected Project</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="projectsContainer"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentProjects = [];
+
+        async function initiateGcpAuth() {
+            const connectBtn = document.getElementById('connectBtn');
+            connectBtn.disabled = true;
+            connectBtn.textContent = '🔄 Connecting...';
+
+            try {
+                const response = await fetch(`${API_BASE}/gcp/auth/initiate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: 'af4da415-0fac-45b0-97ea-a9ee63e9b23d', // Demo user ID
+                        redirectUri: 'http://localhost:3000/canary-deployment/callback'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to initiate GCP auth');
+                }
+
+                const data = await response.json();
+                
+                // Open the authorization URL in a new window
+                const authWindow = window.open(data.authUrl, 'gcp-auth', 'width=600,height=700');
+                
+                // Poll for the callback completion
+                pollForCallback(data.state, authWindow);
+                
+            } catch (error) {
+                console.error('Error initiating GCP auth:', error);
+                showError('Failed to initiate GCP authentication. Please try again.');
+                connectBtn.disabled = false;
+                connectBtn.textContent = '🔗 Connect GCP Account';
+            }
+        }
+
+        async function pollForCallback(state, authWindow) {
+            const maxAttempts = 60; // 5 minutes
+            let attempts = 0;
+
+            const poll = async () => {
+                attempts++;
+                
+                try {
+                    // Simulate the callback (in real app, this would be handled by your backend)
+                    // For demo purposes, we'll just load projects directly
+                    await loadProjects();
+                    authWindow?.close();
+                    return;
+                } catch (error) {
+                    if (attempts >= maxAttempts) {
+                        authWindow?.close();
+                        showError('Authentication timeout. Please try again.');
+                        const connectBtn = document.getElementById('connectBtn');
+                        connectBtn.disabled = false;
+                        connectBtn.textContent = '🔗 Connect GCP Account';
+                        return;
+                    }
+                    
+                    setTimeout(poll, 5000); // Poll every 5 seconds
+                }
+            };
+
+            poll();
+        }
+
+        async function loadProjects() {
+            const container = document.getElementById('projectsContainer');
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Loading your GCP projects...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/gcp/projects`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer YOUR_JWT_TOKEN' // In real app, use actual JWT
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load projects');
+                }
+
+                const data = await response.json();
+                currentProjects = data.projects || [];
+                
+                displayProjects(currentProjects);
+                updateStats(currentProjects);
+                
+                // Hide connect section and show stats
+                document.getElementById('connectSection').style.display = 'none';
+                document.getElementById('statsBar').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                container.innerHTML = '<div class="error">Failed to load projects. Please try connecting again.</div>';
+            }
+        }
+
+        function displayProjects(projects) {
+            const container = document.getElementById('projectsContainer');
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="error">No projects found. Please check your GCP permissions.</div>';
+                return;
+            }
+
+            const projectsHTML = projects.map(project => `
+                <div class="project-card ${project.isActive ? 'active' : ''}" onclick="selectProject('${project.projectId}')">
+                    <div class="project-status ${project.lifecycleState === 'ACTIVE' ? 'status-active' : 'status-inactive'}">
+                        ${project.lifecycleState}
+                    </div>
+                    
+                    <div class="project-header">
+                        <div class="project-icon">
+                            ${project.projectName.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="project-info">
+                            <h3>${project.projectName}</h3>
+                            <div class="project-id">${project.projectId}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Project Number</div>
+                            <div class="detail-value">${project.projectNumber}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">${project.isActive ? 'Active' : 'Inactive'}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="projects-grid">
+                    ${projectsHTML}
+                </div>
+            `;
+        }
+
+        function updateStats(projects) {
+            const totalProjects = projects.length;
+            const activeProjects = projects.filter(p => p.lifecycleState === 'ACTIVE').length;
+            const selectedProject = projects.find(p => p.isActive)?.projectName || 'None';
+
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('activeProjects').textContent = activeProjects;
+            document.getElementById('selectedProject').textContent = selectedProject;
+        }
+
+        function selectProject(projectId) {
+            // Update the active project
+            currentProjects = currentProjects.map(project => ({
+                ...project,
+                isActive: project.projectId === projectId
+            }));
+            
+            displayProjects(currentProjects);
+            updateStats(currentProjects);
+            
+            // In a real app, you'd make an API call to update the active project
+            console.log('Selected project:', projectId);
+        }
+
+        function showError(message) {
+            const container = document.getElementById('projectsContainer');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function showSuccess(message) {
+            const container = document.getElementById('projectsContainer');
+            container.innerHTML = `<div class="success">${message}</div>`;
+        }
+
+        // Demo: Load sample projects for demonstration
+        function loadDemoProjects() {
+            const demoProjects = [
+                {
+                    projectId: 'gradual-rollout-dev',
+                    projectName: 'GradualRollout Development',
+                    projectNumber: '670181297183',
+                    lifecycleState: 'ACTIVE',
+                    isActive: true
+                },
+                {
+                    projectId: 'gradual-rollout-client-demo',
+                    projectName: 'Client Demo Project',
+                    projectNumber: '137549028454',
+                    lifecycleState: 'ACTIVE',
+                    isActive: false
+                },
+                {
+                    projectId: 'automation-for-gr-marketing',
+                    projectName: 'Automation for GR - Marketing',
+                    projectNumber: '76061177541',
+                    lifecycleState: 'ACTIVE',
+                    isActive: false
+                }
+            ];
+            
+            currentProjects = demoProjects;
+            displayProjects(demoProjects);
+            updateStats(demoProjects);
+            
+            document.getElementById('connectSection').style.display = 'none';
+            document.getElementById('statsBar').style.display = 'block';
+        }
+
+        // Load demo projects on page load for demonstration
+        window.addEventListener('load', () => {
+            // Uncomment the line below to see the demo
+            // loadDemoProjects();
+        });
+    </script>
+</body>
+</html> 

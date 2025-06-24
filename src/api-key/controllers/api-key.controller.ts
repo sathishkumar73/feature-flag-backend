@@ -8,6 +8,7 @@ import {
   UseGuards,
   BadRequestException,
   Request,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiKeyService } from '../services/api-key.service';
 import { JwtOrApiKeyGuard } from '../../common/guards/jwt-or-apikey.guard';
@@ -38,6 +39,11 @@ export class ApiKeyController {
     description: 'API key metadata and optionally plain key on first fetch',
   })
   async getApiKey(@Request() req: RequestWithUser) {
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    
     const {
       apiKeyPlain,
       apiKeyMeta,
@@ -47,7 +53,7 @@ export class ApiKeyController {
         ApiKey,
         'id' | 'owner' | 'createdAt' | 'updatedAt' | 'hashedKey'
       > | null;
-    } = await this.apiKeyService.getOrCreateApiKey(req.user.sub);
+    } = await this.apiKeyService.getOrCreateApiKey(userId);
     return { apiKey: apiKeyMeta, plainKey: apiKeyPlain };
   }
 
@@ -60,13 +66,18 @@ export class ApiKeyController {
     description: 'New API key generated and returned',
   })
   async generateApiKey(@Request() req: RequestWithUser) {
-    const activeKey = await this.apiKeyService.getActiveApiKey(req.user.sub);
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    
+    const activeKey = await this.apiKeyService.getActiveApiKey(userId);
     if (activeKey) {
       await this.apiKeyService.revokeApiKey(activeKey.id);
     }
 
     const { apiKeyPlain } = await this.apiKeyService.generateAndStoreApiKey(
-      req.user.sub,
+      userId,
     );
     return { apiKey: apiKeyPlain };
   }
@@ -107,6 +118,10 @@ export class ApiKeyController {
     description: 'Returns all API keys for the user',
   })
   async getApiKeyHistory(@Request() req: RequestWithUser) {
-    return this.apiKeyService.getApiKeyHistory(req.user.sub);
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
+    return this.apiKeyService.getApiKeyHistory(userId);
   }
 }

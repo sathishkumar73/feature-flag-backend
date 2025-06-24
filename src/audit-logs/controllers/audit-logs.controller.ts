@@ -5,6 +5,7 @@ import {
   UseGuards,
   BadRequestException,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuditLogService } from '../services/audit-logs.service';
 import {
@@ -53,7 +54,10 @@ export class AuditLogsController {
       throw new BadRequestException('Limit must be a positive number');
     }
 
-    const userId = req.user.sub;
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in request');
+    }
 
     return this.auditLogService.getAuditLogs({
       userId,
