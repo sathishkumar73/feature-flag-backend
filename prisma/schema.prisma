@@ -51,19 +51,6 @@ model AuditLog {
   performedBy   User?    @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
 }
 
-model PlaygroundFeatureFlag {
-  session_id         String
-  flag_key           String
-  enabled            Boolean  @default(false)
-  rollout_percentage Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  id                 String   @id @default(uuid()) @db.Uuid
-
-  @@unique([session_id, flag_key])
-  @@map("Playground")
-}
-
 model ApiKey {
   hashedKey   String    @unique
   owner       String?
@@ -138,6 +125,44 @@ model OutreachRecord {
   updatedAt    DateTime  @updatedAt
 }
 
+model Campaign {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  description    String?
+  startDate      DateTime
+  duration       Int
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  CampaignTarget CampaignTarget[]
+}
+
+model CampaignTarget {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaignId    String             @db.Uuid
+  title         String
+  description   String?
+  type          CampaignTargetType
+  platform      String
+  target        Int
+  icon          String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime
+  Campaign      Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  DailyProgress DailyProgress[]
+}
+
+model DailyProgress {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaignTargetId String         @db.Uuid
+  date             DateTime       @db.Date
+  progress         Int
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime
+  CampaignTarget   CampaignTarget @relation(fields: [campaignTargetId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignTargetId, date])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -163,4 +188,10 @@ enum Status {
   Responded
   Declined
   Bounced
+}
+
+enum CampaignTargetType {
+  OUTREACH
+  CONTENT
+  ENGAGEMENT
 }
