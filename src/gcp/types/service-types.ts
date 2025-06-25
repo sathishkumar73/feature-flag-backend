@@ -39,6 +39,33 @@ export interface ServiceStatusResponse {
   errorMessage?: string;
 }
 
+export interface StorageSetupResponse {
+  success: boolean;
+  bucketName: string;
+  region: string;
+  folders: string[]; // ['stable/', 'canary/']
+  bucketUrl: string;
+  message: string;
+  error?: string;
+}
+
+export interface StorageStatusResponse {
+  success: boolean;
+  bucketExists: boolean;
+  bucketName?: string;
+  region?: string;
+  folders?: string[];
+  bucketUrl?: string;
+  message: string;
+  error?: string;
+}
+
+export interface StorageCleanupResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
 export const REQUIRED_GCP_SERVICES: Omit<GcpService, 'enabled' | 'status'>[] = [
   {
     name: 'run',

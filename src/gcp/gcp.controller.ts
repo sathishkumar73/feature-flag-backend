@@ -26,6 +26,7 @@ import { InitiateGcpAuthDto } from './dtos/initiate-gcp-auth.dto';
 import { GcpCallbackDto } from './dtos/gcp-callback.dto';
 import { SaveProjectSelectionDto } from './dtos/save-project-selection.dto';
 import { EnableServiceDto, EnableAllServicesDto } from './dtos/enable-service.dto';
+import { StorageSetupDto } from './dtos/storage-setup.dto';
 import { JwtOrApiKeyGuard } from '../common/guards/jwt-or-apikey.guard';
 import { RequestWithUser } from '../auth/types/request-with-user.type';
 
@@ -326,13 +327,9 @@ export class GcpController {
     return await this.gcpService.enableAllServices(userId, body.projectId);
   }
 
-  @Get('services/status/:serviceName')
+  @Get('services/:serviceName/status')
   @ApiOperation({ summary: 'Check individual service status' })
-  @ApiParam({
-    name: 'serviceName',
-    description: 'Name of the GCP service (e.g., "run", "storage-api")',
-    example: 'run'
-  })
+  @ApiParam({ name: 'serviceName', description: 'GCP service name (e.g., run, storage-api)' })
   @ApiResponse({
     status: 200,
     description: 'Service status retrieved successfully',
@@ -358,28 +355,155 @@ export class GcpController {
     return await this.gcpService.getServiceStatus(userId, serviceName);
   }
 
-  @Get('test-billing-error')
-  @ApiOperation({ summary: 'Test billing error message format' })
+  @Post('storage/setup')
+  @ApiOperation({ summary: 'Setup GCS bucket for canary deployments' })
   @ApiResponse({
-    status: 400,
-    description: 'Test billing error message',
+    status: 200,
+    description: 'Storage bucket setup completed successfully',
     schema: {
       type: 'object',
       properties: {
-        statusCode: { type: 'number', example: 400 },
-        message: { 
-          type: 'string', 
-          example: 'Billing must be enabled for Cloud Run API. Please enable billing for your GCP project at https://console.cloud.google.com/billing/linkedaccount?project=test-project'
+        success: { type: 'boolean' },
+        bucketName: { type: 'string' },
+        region: { type: 'string' },
+        folders: { 
+          type: 'array', 
+          items: { type: 'string' },
+          example: ['stable/', 'canary/']
         },
-        error: { type: 'string', example: 'Bad Request' }
+        bucketUrl: { type: 'string' },
+        message: { type: 'string' },
+        error: { type: 'string' }
+      }
+    }
+  })
+  @ApiBadRequestResponse({ description: 'Invalid project ID' })
+  @ApiUnauthorizedResponse({ description: 'Authentication required' })
+  @ApiNotFoundResponse({ description: 'No GCP connection found' })
+  @ApiInternalServerErrorResponse({ description: 'Failed to setup storage bucket' })
+  async setupStorage(@Body() body: StorageSetupDto, @Req() req: RequestWithUser) {
+    const userId = req.user?.sub || req.user?.apiKey;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+    return await this.gcpService.setupStorage(userId, body.projectId);
+  }
+
+  @Get('storage/status')
+  @ApiOperation({ summary: 'Check storage bucket status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Storage status retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        bucketExists: { type: 'boolean' },
+        bucketName: { type: 'string' },
+        region: { type: 'string' },
+        folders: { 
+          type: 'array', 
+          items: { type: 'string' },
+          example: ['stable/', 'canary/']
+        },
+        bucketUrl: { type: 'string' },
+        message: { type: 'string' },
+        error: { type: 'string' }
+      }
+    }
+  })
+  @ApiUnauthorizedResponse({ description: 'Authentication required' })
+  @ApiNotFoundResponse({ description: 'No GCP connection found' })
+  @ApiInternalServerErrorResponse({ description: 'Failed to check storage status' })
+  async getStorageStatus(@Req() req: RequestWithUser) {
+    const userId = req.user?.sub || req.user?.apiKey;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+    
+    // Get the active project from the user's GCP connection
+    const gcpConnection = await this.gcpService.getProjectSelection(userId);
+    if (!gcpConnection.projectId) {
+      throw new HttpException('No active project selected', HttpStatus.BAD_REQUEST);
+    }
+    
+    return await this.gcpService.getStorageStatus(userId, gcpConnection.projectId);
+  }
+
+  @Delete('storage/cleanup')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cleanup storage bucket and all contents' })
+  @ApiResponse({
+    status: 200,
+    description: 'Storage cleanup completed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        error: { type: 'string' }
+      }
+    }
+  })
+  @ApiUnauthorizedResponse({ description: 'Authentication required' })
+  @ApiNotFoundResponse({ description: 'No GCP connection found' })
+  @ApiInternalServerErrorResponse({ description: 'Failed to cleanup storage bucket' })
+  async cleanupStorage(@Req() req: RequestWithUser) {
+    const userId = req.user?.sub || req.user?.apiKey;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+    
+    // Get the active project from the user's GCP connection
+    const gcpConnection = await this.gcpService.getProjectSelection(userId);
+    if (!gcpConnection.projectId) {
+      throw new HttpException('No active project selected', HttpStatus.BAD_REQUEST);
+    }
+    
+    return await this.gcpService.cleanupStorage(userId, gcpConnection.projectId);
+  }
+
+  @Get('test-billing-error')
+  @ApiOperation({ summary: 'Test billing error response' })
+  @ApiResponse({
+    status: 200,
+    description: 'Billing error test response',
+    schema: {
+      type: 'object',
+      properties: {
+        error: { type: 'string' },
+        code: { type: 'number' }
       }
     }
   })
   async testBillingError() {
-    // This is a test endpoint to verify error message format
-    throw new HttpException(
-      'Billing must be enabled for Cloud Run API. Please enable billing for your GCP project at https://console.cloud.google.com/billing/linkedaccount?project=test-project',
-      HttpStatus.BAD_REQUEST
-    );
+    return {
+      error: 'Billing account not found. Please enable billing for your project.',
+      code: 400
+    };
+  }
+
+  @Post('auth/refresh-token')
+  @ApiOperation({ summary: 'Force refresh the access token for the authenticated user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token refreshed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' }
+      }
+    }
+  })
+  @ApiUnauthorizedResponse({ description: 'Authentication required or token refresh failed' })
+  @ApiNotFoundResponse({ description: 'No GCP connection found' })
+  @ApiInternalServerErrorResponse({ description: 'Failed to refresh token' })
+  async forceTokenRefresh(@Req() req: RequestWithUser) {
+    const userId = req.user?.sub || req.user?.apiKey;
+    if (!userId) {
+      throw new Error('User ID not found in request');
+    }
+    return await this.gcpService.forceTokenRefresh(userId);
   }
 } 
